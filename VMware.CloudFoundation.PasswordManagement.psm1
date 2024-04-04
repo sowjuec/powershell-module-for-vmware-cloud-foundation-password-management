@@ -726,7 +726,7 @@ Function Invoke-PasswordPolicyManager {
                     $esxiPasswordPolicy | Add-Member -notepropertyname 'accountLockout' -notepropertyvalue $esxiAccountLockout
                     $ariaPasswordPolicy = New-Object -TypeName psobject
                     $ariaPasswordPolicy | Add-Member -notepropertyname 'passwordExpiration' -notepropertyvalue $ariaPasswordExpiration
-                    $ariaPasswordPolicy | Add-Member -notepropertyname 'passwordExpiration' -notepropertyvalue $ariaPasswordComplexity
+                    $ariaPasswordPolicy | Add-Member -notepropertyname 'passwordComplexity' -notepropertyvalue $ariaPasswordComplexity
                     $ariaPasswordPolicy | Add-Member -notepropertyname 'accountLockout' -notepropertyvalue $ariaAccountLockout
                     if ($PsBoundParameters.ContainsKey("wsaFqdn")) {
                         $wsaDirectoryPasswordPolicy = New-Object -TypeName psobject
