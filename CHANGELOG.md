@@ -18,6 +18,7 @@ Bugfix:
 Enhancement:
 
 - Added `5.1.1.0` to `Get-PasswordPolicyDefault` and `Get-PasswordPolicyConfig` to support VMware Cloud Foundation 5.1.1. [GH-164](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/164)
+- Added `PasswordRotationTestsuite` with sample testcase for NSX Edge Password Rotation. [GH-185](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/185)
 - Enhanced `Get-PasswordPolicyDefault` to show summary in easily readable format. [GH-178](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/178)
 - Added functions to retrieve password policies for each available VMware Aria product deployed in a VMware Cloud Foundation instance. [GH-166](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/166)
   - `Get-AriaLocalUserAccountLockout` cmdlet to retrieve the password account lockout for the VMware Aria product appliances local users.
@@ -31,9 +32,9 @@ Enhancement:
   - `Update-AriaLocalUserPasswordExpiration` cmdlet to update all password expiration for the VMware Aria product appliances local users.
   - `Update-AriaLocalUserPasswordComplexity` cmdlet to update all password complexity for the VMware Aria product appliances local users.
 
-
 Chore:
 
+- Added Pester tests for password rotation. [GH-185](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/185)
 - Updated `VMware.PowerCLI` module dependency from v13.1.0 to v13.2.1. [GH-179](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/179)
 - Updated `PowerValidatedSolutions` from v2.8.0 to v2.9.0. [GH-179](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/179)
 

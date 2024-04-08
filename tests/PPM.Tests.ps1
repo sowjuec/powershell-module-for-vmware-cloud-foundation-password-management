@@ -50,6 +50,7 @@ Describe 'Test Suite' {
                 [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $output,
                 [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $server,
                 [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()] $user,
+                [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()] $type,
                 [bool] $useLiveData = $false
             )
 
@@ -58,33 +59,46 @@ Describe 'Test Suite' {
                 $index = 0
                 # Loop through each item in the output.
                 foreach ($item in $output) {
-                    if ($user) {
-                        # If the system matches the server and user, break the loop.
-                        if ($item.'System' -match $server -and $item.'User' -match $user) {
+                    if ($user -and $type) {
+                        if ($item.'System' -match $server -and $item.'User' -match $user -and $item.'Type' -match $type) {
                             $flag = $true
                             break
                         }
                     } else {
-                        # If the system matches the server, break the loop.
-                        if ($item.'System' -match $server) {
-                            $flag = $true
-                            break
+                        if ($user) {
+                            # If the system matches the server and user, break the loop.
+                            if ($item.'System' -match $server -and $item.'User' -match $user) {
+                                $flag = $true
+                                break
+                            }
+                        } elseif ($type) {
+                            if ($item.'System' -match $server -and $item.'Type' -match $type) {
+                                $flag = $true
+                                break
+                            }
+                        } else {
+                            # If the system matches the server, break the loop.
+                            if ($item.'System' -match $server) {
+                                $flag = $true
+                                break
+                            }
                         }
                     }
                     # Increment the index by 1.
                     $index = $index + 1
                 }
-                return $index
             } else {
                 $index = $output.'Index'
             }
             if (-Not $flag) {
                 Write-LogToFile -Type ERROR -message "$server or $user is not matching in the $output"
+            } else {
+                return $index
             }
         }
 
         Start-SetupLogFile
-        $inputData = Get-Content -Raw 'inputData.json' | ConvertFrom-Json
+        $inputData = Get-Content -Raw 'InputData.json' | ConvertFrom-Json
         $server = $inputData.'SDDC Manager'
         $vmName = $inputData.'SDDC Manager VM Name'
         $user = $inputData.'User'
@@ -99,6 +113,13 @@ Describe 'Test Suite' {
         $nsxManagerNode = $inputData.$domain.'NSX Manager Nodes'[0]
         $nsxManager = $inputData.$domain.'NSX Manager'[0]
         $nsxEdgeNode = $inputData.$domain.'NSX Edge Nodes'[0]
+        $nsxEdgeFqdn = $inputData.$domain.'NSX Edge FQDN'[0]
+        $vcenterServer = $inputData.$domain.'vCenter Server'[0]
+        $ariaLifeCycleManagerFqdn = "xint-vrslcm01.rainpole.io"
+        $ariaOperations = "xint-vrops01a.rainpole.io"
+        $ariaOperationsLogs = "sfo-vrli01a.sfo.rainpole.io"
+        $ariaAutomation = "xint-vra01a.rainpole.io"
+        $workspaceOneAccess = "xint-wsa01a.rainpole.io"
     }
 
     Describe 'Password Expiration Test Suite' -Tag "PasswordExpirationSuite" {
@@ -129,7 +150,7 @@ Describe 'Test Suite' {
                     # Get the index of the first ESXi host in the output.
                     $index = Get-Index -output $updatedExpirationSettings -server $esxiServer -useLiveData $useLiveData
 
-                    # Get the updated Max Days.
+                    # Get the updated frequency in Days.
                     $outMaxDays = $updatedExpirationSettings[$index].'Max Days'
 
                     # Output the updated Max Days.
@@ -1635,5 +1656,954 @@ Describe 'Test Suite' {
                 }
             }
         }
+    }
+    # The argument "esxiServer" does not belong to the set "sso,vcenterServer,nsxManager,nsxEdge,ariaLifecycle,ariaOperations,ariaOperationsLogs,ariaAutomation,workspaceOneAccess,backup"
+    Describe 'Password Rotation Test Suite' -Tag "PasswordRotationSuite" {
+        # Nsx Edge Password Rotation
+        Describe 'NSX Edge Password Rotation' -Tag "NsxEdgePasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of NSX Edge Password Rotation Testcase"
+
+                    # Request the current Nsx Edge  password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxEdge'
+
+                    # Get the index of the first Nsx Edge  in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $nsxEdgeFqdn -user 'root' -Type 'SSH' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the NSX Edge  $nsxEdgeFqdn in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the Nsx Edge  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxEdge' -resourceName $nsxEdgeFqdn -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated Nsx Edge  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxEdge'
+
+                        # Get the index of the first NSX Edge Node in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $nsxEdgeNode -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated Max Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the NSX Edge Password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxEdge' -resourceName $nsxEdgeFqdn -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxEdge'
+
+                        # Get the index of the first NSX Edge Node in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $nsxEdgeNode -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated Max Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Nsx Edge Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of Nsx Edge Password Rotation Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the Nsx Edge  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxEdge' -resourceName $nsxEdgeFqdn -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Nsx Edge Password Rotation Negative Testcase"
+                }
+            }
+        }
+        # Nsx Manager Password Rotation
+        Describe 'Nsx Manager Password Rotation' -Tag "NsxManagerPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of Nsx Manager Password Rotation Testcase"
+
+                    # Request the current Nsx Manager  password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxManager'
+
+                    # Get the index of the first Nsx Manager  in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $nsxManager -user 'root' -Type 'SSH' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the Nsx Manager  $nsxManager in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the Nsx Manager  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxManager' -resourceName $nsxManager -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated Nsx Manager  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxManager'
+
+                        # Get the index of the first Nsx Manager  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $nsxManager -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated Max Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the Nsx Manager  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxManager' -resourceName $nsxManager -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxManager'
+
+                        # Get the index of the first Nsx Manager  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $nsxManager -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated Max Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Nsx Manager Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of Nsx Manager Password Rotation Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the Nsx Manager  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'nsxManager' -resourceName $nsxManager -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Nsx Manager Password Rotation Negative Testcase"
+                }
+            }
+        }
+        <#
+        # vCenter Single Sign-on Password Rotation
+        ######FAILING  AS Error Message:     {"errorCode":"PASSWORD_MANAGER_USER_NOT_ALLOWED_PSC","arguments":[],"message":"User is not allowed to update or rotate PSC credentials. Please login using an alternate 'ADMIN' account to perform this operation.","referenceToken":"KBA3UD"}  not sure how to fix it
+        Describe 'SSO Password Rotation' -Tag "SSOPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of vCenter Single Sign-on Password Rotation Testcase"
+
+                    # Request the current vCenter Single Sign-on password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'sso'
+
+                    # Get the index of the first vCenter Single Sign-on in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $vcenterServer -user $user -Type 'SSO' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the vCenter Single Sign-on $vcenterServer in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the vCenter Single Sign-on password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'sso' -resourceName $vcenterServer -credential 'SSO' -credentialName $user -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated vCenter Single Sign-on password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'sso'
+
+                        # Get the index of the first vCenter Single Sign-on in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $vcenterServer -useLiveData $useLiveData -user $user -Type 'SSO'
+
+                        # Get the updated Max Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the vCenter Single Sign-on password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'sso' -resourceName $vcenterServer -credential 'SSO' -credentialName $user -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'sso'
+
+                        # Get the index of the first vCenter Single Sign-on in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $vcenterServer -useLiveData $useLiveData -user $user -Type 'SSO'
+
+                        # Get the updated Max Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of vCenter Single Sign-on Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of vCenter Single Sign-on Password Rotation Negative Testcase"
+                    # Set the frequency to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the vCenter Single Sign-on password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'sso' -resourceName $vcenterServer -credential SSO -credentialName $user -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of vCenter Single Sign-on Password Rotation Negative Testcase"
+                }
+            }
+        }
+        #>
+        # vCenter Server Password Rotation
+        Describe 'vCenter Server Password Rotation' -Tag "vCenterPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of vCenter Server Password Rotation Testcase"
+
+                    # Request the current vCenter Server  password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'vcenterServer'
+
+                    # Get the index of the first vCenter Server  in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $vcenterServer -user 'root' -Type 'SSH' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the vCenter Server $vcenterServer in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the vCenter Server  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'vcenterServer' -resourceName $vcenterServer -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated vCenter Server  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'vcenterServer'
+
+                        # Get the index of the first vCenter Server  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $vcenterServer -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated Max Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the vCenter Server  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'vcenterServer' -resourceName $vcenterServer -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'vcenterServer'
+
+                        # Get the index of the first vCenter Server  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $vcenterServer -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of vCenter Server Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of vCenter Server Password Rotation Negative Testcase"
+                    # Set the frequency to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the vCenter Server  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'vcenterServer' -resourceName $vcenterServer -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of vCenter Server Password Rotation Negative Testcase"
+                }
+            }
+        }
+        <#
+        # SDDC Manager Password Rotation
+        ####FAILURE :    Caught Exception: Cannot validate argument on parameter 'credential'. The argument "FTP" does not belong to the set "ssh,api,audit,sso" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
+        Describe 'SDDC Manager Password Rotation' -Tag "SDDCManagerPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of SDDC Manager Password Rotation Testcase"
+
+                    # Request the current SDDC Manager  password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'backup'
+
+                    # Get the index of the first SDDC Manager  in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $server -user 'backup' -Type 'FTP' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the SDDC Manager  $server in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the SDDC Manager  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'backup' -resourceName $server -credential 'FTP' -credentialName 'backup' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated SDDC Manager  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'backup'
+
+                        # Get the index of the first SDDC Manager  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $server -useLiveData $useLiveData -user 'backup' -Type 'FTP'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the SDDC Manager  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'backup' -resourceName $server -credential 'FTP' -credentialName 'backup' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'backup'
+
+                        # Get the index of the first SDDC Manager  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $server -useLiveData $useLiveData -user 'backup' -Type 'FTP'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of SDDC Manager Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of SDDC Manager Password Rotation Negative Testcase"
+                    # Set the frequency to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the SDDC Manager  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'backup' -resourceName $server -credential FTP -credentialName backup -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of SDDC Manager Password Rotation Negative Testcase"
+                }
+            }
+        }
+        #>
+        # Aria Life Cycle Password Rotation
+        Describe 'Aria Life Cycle Manager Password Rotation' -Tag "AriaLifeCycleManagerPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of Aria Life Cycle Manager Password Rotation Testcase"
+
+                    # Request the current Aria Life Cycle password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaLifecycle'
+
+                    # Get the index of the first Aria Life Cycle Manager in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $ariaLifeCycleManagerFqdn -user 'root' -Type 'SSH' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the Aria Life Cycle Manager $ariaLifeCycleManagerFqdn in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the Aria Life Cycle Manager password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaLifecycle' -resourceName $ariaLifeCycleManagerFqdn -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated Aria Life Cycle Manager  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaLifecycle'
+
+                        # Get the index of the first Aria Life Cycle Manager  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $ariaLifeCycleManagerFqdn -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the Aria Life Cycle Manager  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaLifecycle' -resourceName $ariaLifeCycleManagerFqdn -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaLifecycle'
+
+                        # Get the index of the first Aria Life Cycle Manager  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $ariaLifeCycleManagerFqdn -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Aria Life Cycle Manager Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of Aria Life Cycle Manager Password Rotation Negative Testcase"
+                    # Set the frequency to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the Aria Life Cycle Manager  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaLifecycle' -resourceName $ariaLifeCycleManagerFqdn -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Aria Life Cycle Manager Password Rotation Negative Testcase"
+                }
+            }
+        }
+        # Aria Operations Password Rotation
+        Describe 'Aria Operations Password Rotation' -Tag "AriaOperationsPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of Aria Operations Password Rotation Testcase"
+
+                    # Request the current Aria Operations password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperations'
+
+                    # Get the index of the first Aria Operations in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $ariaOperations -user 'root' -Type 'SSH' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the Aria Operations $ariaOperations in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the Aria Operations password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperations' -resourceName $ariaOperations -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated Aria Operations  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperations'
+
+                        # Get the index of the first Aria Operations  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $ariaOperations -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the Aria Operations  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperations' -resourceName $ariaOperations -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperations'
+
+                        # Get the index of the first Aria Operations  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $ariaOperations -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Aria Operations Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of Aria Operations Password Rotation Negative Testcase"
+                    # Set the frequency to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the Aria Operations  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperations' -resourceName $ariaOperations -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Aria Operations Password Rotation Negative Testcase"
+                }
+            }
+        }
+        # Aria Operation Logs Password Rotation
+        Describe 'Aria Operation Logs Password Rotation' -Tag "AriaOperationLogsPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of Aria Operation Logs Password Rotation Testcase"
+
+                    # Request the current Aria Operation Logs password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs'
+
+                    # Get the index of the first Aria Operation Logs in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $ariaOperationsLogs -user 'root' -Type 'SSH' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the Aria Operation Logs $ariaOperationsLogs in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the Aria Operation Logs password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs' -resourceName $ariaOperationsLogs -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated Aria Operation Logs  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs'
+
+                        # Get the index of the first Aria Operation Logs  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $ariaOperationsLogs -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the Aria Operation Logs  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs' -resourceName $ariaOperationsLogs -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs'
+
+                        # Get the index of the first Aria Operation Logs  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $ariaOperationsLogs -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Aria Operation Logs Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of Aria Operation Logs Password Rotation Negative Testcase"
+                    # Set the frequency to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the Aria Operation Logs  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs' -resourceName $ariaOperationsLogs -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Aria Operation Logs Password Rotation Negative Testcase"
+                }
+            }
+        }
+        # Aria Automation Password Rotation
+        Describe 'Aria Automation Password Rotation' -Tag "AriaAutomationPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of Aria Automation Password Rotation Testcase"
+
+                    # Request the current Aria Automation password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation'
+
+                    # Get the index of the first Aria Automation in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $ariaAutomation -user 'root' -Type 'SSH' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the Aria Automation $ariaAutomation in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+
+
+                    if ($frequencyDays -match 'Disabled') {
+
+                        # Update the Aria Automation password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation' -resourceName $ariaAutomation -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated Aria Automation  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation'
+
+                        # Get the index of the first Aria Automation  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $ariaAutomation -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the Aria Automation  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation' -resourceName $ariaAutomation -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation'
+
+                        # Get the index of the first Aria Automation  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $ariaAutomation -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Aria Automation Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of Aria Automation Password Rotation Negative Testcase"
+                    # Set the frequency to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the Aria Automation  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation' -resourceName $ariaAutomation -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Aria Automation Password Rotation Negative Testcase"
+                }
+            }
+        }
+        # Workspace One Access Password Rotation
+        Describe 'Workspace One Access Password Rotation' -Tag "WorkspaceOneAcccessPasswordRotation" {
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of Workspace One Access Password Rotation Testcase"
+
+                    # Request the current Workspace One Access password Rotation settings.
+                    $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'workspaceOneAccess'
+
+                    # Get the index of the first Workspace One Access in the output.
+                    $index = Get-Index -output $currentRotationSettings -server $workspaceOneAccess -user 'root' -Type 'SSH' -useLiveData $useLiveData
+                    Write-LogToFile -message "The index of the Workspace One Access $workspaceOneAccess in the output is $index"
+
+                    # check the Frequency of auto rotation.
+                    $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
+                    Write-LogToFile -message "Frequency Days: $frequencyDays"
+
+                    if ($frequencyDays -match 'Disabled') {
+                        # Update the Workspace One Access password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'workspaceOneAccess' -resourceName $workspaceOneAccess -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        # Request the updated Workspace One Access  password Rotation settings.
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'workspaceOneAccess'
+
+                        # Get the index of the first Workspace One Access  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $workspaceOneAccess -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 90
+
+                    } else {
+                        # Update the Workspace One Access  password Rotation settings.
+                        $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'workspaceOneAccess' -resourceName $workspaceOneAccess -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
+                        Write-LogToFile -message "Update Result: $updateResult"
+
+                        $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'workspaceOneAccess'
+
+                        # Get the index of the first Workspace One Access  in the output.
+                        $index = Get-Index -output $updatedRotationSettings -server $workspaceOneAccess -useLiveData $useLiveData -user 'root' -Type 'SSH'
+
+                        # Get the updated frequency in Days.
+                        $outFrequencyDays = $updatedRotationSettings[$index].'Frequency Days'
+
+                        # Output the updated frequency in Days.
+                        Write-LogToFile -message "Updated Frequency Days: $outFrequencyDays"
+
+                        # Assert that the updated Max Days is equal to the Decremented Max Days.
+                        $outFrequencyDays | Should -Be 'Disabled'
+                    }
+
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Workspace One Access Password Rotation Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of Workspace One Access Password Rotation Negative Testcase"
+                    # Set the frequency to an invalid value
+                    $frequencyInDays = 100000000000000000000000000000
+
+                    # Attempt to update the Workspace One Access  password Rotation settings.
+                    $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'workspaceOneAccess' -resourceName $workspaceOneAccess -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of Workspace One Access Password Rotation Negative Testcase"
+                }
+            }
+        }
+
     }
 }

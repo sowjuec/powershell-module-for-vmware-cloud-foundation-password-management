@@ -34,6 +34,13 @@
 		"NSX Edge Nodes": [
 			"sfo-m01-en01",
 			"sfo-m01-en02"
+		],
+		"NSX Edge FQDN": [
+			"sfo-m01-en01.sfo.rainpole.io",
+			"sfo-m01-en02.sfo.rainpole.io"
+		],
+		"vCenter Server": [
+			"sfo-m01-vc01.sfo.rainpole.io"
 		]
 	},
 	"sfo-w01": {
@@ -57,6 +64,13 @@
 		"NSX Edge Nodes": [
 			"sfo-w01-en01",
 			"sfo-w01-en02"
+		],
+		"NSX Edge FQDN": [
+			"sfo-w01-en01.sfo.rainpole.io",
+			"sfo-w01-en02.sfo.rainpole.io"
+		],
+		"vCenter Server": [
+			"sfo-w01-vc01.sfo.rainpole.io"
 		]
 	}
 }
