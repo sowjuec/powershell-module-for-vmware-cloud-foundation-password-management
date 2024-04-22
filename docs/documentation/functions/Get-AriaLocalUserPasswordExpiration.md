@@ -9,7 +9,7 @@ Retrieves the password expiration policy for the specified local user.
 ```powershell
 Get-AriaLocalUserPasswordExpiration -server <String> -user <String> [-pass <String>] -domain <String>
  -vmName <String> -guestUser <String> [-guestPassword <String>] [-sudo] -localUser <Array>
- [-drift] [-reportPath <String>] [-policyFile <String>] [<CommonParameters>]
+ [<CommonParameters>]
 ```
 
 ## Description
@@ -188,54 +188,6 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -drift
-
-Switch to compare the current configuration against the product defaults or a JSON file.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -reportPath
-
-The path to save the policy report.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -policyFile
-
-The path to the policy configuration file.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

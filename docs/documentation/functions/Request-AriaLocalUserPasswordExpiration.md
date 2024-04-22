@@ -136,7 +136,7 @@ Accept wildcard characters: False
 
 ### -vidm
 
-Switch to retrieve the password complexity policy for VMware Aria Lifecycle Workspace One.
+Switch to retrieve the password complexity policy for Workspace ONE Access.
 
 ```yaml
 Type: SwitchParameter
@@ -152,7 +152,7 @@ Accept wildcard characters: False
 
 ### -settings
 
-The settings to retrieve the password expiration policy for VMware Aria Lifecycle Workspace One. One of: directory, localuser.
+The settings to retrieve the password expiration policy for Workspace ONE Access. One of: directory, localuser.
 
 ```yaml
 Type: String
@@ -168,7 +168,7 @@ Accept wildcard characters: False
 
 ### -vidmdrift
 
-Switch to compare the current configuration against the product defaults or a JSON file for Aria Lifecycle Workspace One.
+Switch to compare the current configuration against the product defaults or a JSON file for Workspace ONE Access.
 
 ```yaml
 Type: SwitchParameter
