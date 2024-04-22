@@ -51,7 +51,7 @@ This example retrieves the password expiration policy for VMware Aria Automation
 Request-AriaLocalUserAccountLockout -server sfo-vcf01.sfo.rainpole.io -user admin@local -pass VM@re1!VMware1! -vidm -settings directory
 ```
 
-This example retrieves the password expiration policy for VMware Aria Lifecycle Workspace One instances for directory users.
+This example retrieves the password expiration policy for Workspace ONE Access instances for directory users.
 
 ### Example 5
 
@@ -59,7 +59,7 @@ This example retrieves the password expiration policy for VMware Aria Lifecycle 
 Request-AriaLocalUserAccountLockout -server sfo-vcf01.sfo.rainpole.io -user admin@local -pass VM@re1!VMware1! -vidm -settings directory -vidmdrift -reportPath "F:\Reporting" -policyFile "passwordPolicyConfig.json"
 ```
 
-This example retrieves the password expiration policy for VMware Aria Lifecycle Workspace One instances for directory users and checks the configuration drift using the provided configuration JSON.
+This example retrieves the password expiration policy for Workspace ONE Access instances for directory users and checks the configuration drift using the provided configuration JSON.
 
 ### Example 6
 
@@ -67,7 +67,7 @@ This example retrieves the password expiration policy for VMware Aria Lifecycle 
 Request-AriaLocalUserAccountLockout -server sfo-vcf01.sfo.rainpole.io -user admin@local -pass VM@re1!VMware1! -vidm -settings directory -vidmdrift
 ```
 
-This example retrieves the password expiration policy for VMware Aria Lifecycle Workspace One instances for directory users and compares the configuration against the product defaults.
+This example retrieves the password expiration policy for Workspace ONE Access instances for directory users and compares the configuration against the product defaults.
 
 ## Parameters
 
@@ -137,7 +137,7 @@ Accept wildcard characters: False
 
 ### -vidm
 
-Switch to retrieve the password account lockout policy for VMware Aria Lifecycle Workspace One.
+Switch to retrieve the password account lockout policy for Workspace ONE Access.
 
 ```yaml
 Type: SwitchParameter
@@ -153,7 +153,7 @@ Accept wildcard characters: False
 
 ### -settings
 
-The settings to retrieve the password account lockout policy for VMware Aria Lifecycle Workspace One. One of: directory, localuser.
+The settings to retrieve the password account lockout policy for Workspace ONE Access. One of: directory, localuser.
 
 ```yaml
 Type: String
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 
 ### -vidmdrift
 
-Switch to compare the current configuration against the product defaults or a JSON file for Aria Lifecycle Workspace One.
+Switch to compare the current configuration against the product defaults or a JSON file for Workspace ONE Access.
 
 ```yaml
 Type: SwitchParameter

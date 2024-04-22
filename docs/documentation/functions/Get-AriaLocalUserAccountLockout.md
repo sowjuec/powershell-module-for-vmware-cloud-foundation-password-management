@@ -8,8 +8,7 @@ Retrieves the password account lockout for local users.
 
 ```powershell
 Get-AriaLocalUserAccountLockout -vmName <String> -guestUser <String> -guestPassword <String> [-vrni]
- [-product <String>] [-drift] [-version <String>] [-reportPath <String>] [-policyFile <String>]
- [<CommonParameters>]
+ [-product <String>] [<CommonParameters>]
 ```
 
 ## Description
@@ -25,22 +24,6 @@ Get-AriaLocalUserAccountLockout -vmName sfo-vra01 -guestUser root -guestPassword
 ```
 
 This example retrieves the VMware Aria Automation account lockout policy.
-
-### Example 2
-
-```powershell
-Get-AriaLocalUserAccountLockout -vmName sfo-vra01 -guestUser root -guestPassword VMw@re1! -product vra -drift -reportPath "F:\Reporting" -policyFile "passwordPolicyConfig.json"
-```
-
-This example retrieves the VMware Aria Automation account lockout policy and checks the configuration drift using the provided configuration JSON.
-
-### Example 3
-
-```powershell
-Get-Get-AriaLocalUserAccountLockout -vmName sfo-vra01 -guestUser root -guestPassword VMw@re1! -product vra -drift
-```
-
-This example retrieves the VMware Aria Automation account lockout policy and compares the configuration against the product defaults.
 
 ## Parameters
 
@@ -124,69 +107,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -drift
-
-The configuration drift flag.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -version
-
-The product version.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -reportPath
-
-The report path.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -policyFile
-
-The policy file.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### Common Parameters
 
