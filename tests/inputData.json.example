@@ -14,6 +14,13 @@
 		"sfo-w01"
 	],
 	"sfo-m01": {
+		"Aria" : {
+			"Aria Suite Lifecycle": "xint-vrslcm01.rainpole.io",
+			"Aria Operations": "xint-vrops01a.rainpole.io",
+			"Aria Operations Logs":  "sfo-vrli01a.sfo.rainpole.io",
+			"Aria Automation": "xint-vra01a.rainpole.io",
+			"Workspace ONE Access":  "xint-wsa01a.rainpole.io"
+		},
 		"ESXi Hosts": [
 			"sfo01-m01-esx01.sfo.rainpole.io",
 			"sfo01-m01-esx02.sfo.rainpole.io",
@@ -34,6 +41,13 @@
 		"NSX Edge Nodes": [
 			"sfo-m01-en01",
 			"sfo-m01-en02"
+		],
+		"NSX Edge FQDN": [
+			"sfo-m01-en01.sfo.rainpole.io",
+			"sfo-m01-en02.sfo.rainpole.io"
+		],
+		"vCenter Server": [
+			"sfo-m01-vc01.sfo.rainpole.io"
 		]
 	},
 	"sfo-w01": {
@@ -57,6 +71,13 @@
 		"NSX Edge Nodes": [
 			"sfo-w01-en01",
 			"sfo-w01-en02"
+		],
+		"NSX Edge FQDN": [
+			"sfo-w01-en01.sfo.rainpole.io",
+			"sfo-w01-en02.sfo.rainpole.io"
+		],
+		"vCenter Server": [
+			"sfo-w01-vc01.sfo.rainpole.io"
 		]
 	}
 }
