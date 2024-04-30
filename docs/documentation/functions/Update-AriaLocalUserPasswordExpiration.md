@@ -86,7 +86,15 @@ Accept wildcard characters: False
 
 ### -product
 
-The product to configure.
+The product to configure. One of: `vra`, `vrops`, `vrli`, `vrslcm`, and `vrni`.
+
+| Product                             | Product Option |
+|-------------------------------------|----------------|
+| VMware Aria Suite Lifecycle         | `vrslcm`       |
+| VMware Aria Operations              | `vrops`        |
+| VMware Aria Operations for Logs     | `vrli`         |
+| VMware Aria Operations for Networks | `vrni`         |
+| VMware Aria Automation              | `vra`          |
 
 ```yaml
 Type: String

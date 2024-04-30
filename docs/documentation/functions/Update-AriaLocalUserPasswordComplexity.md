@@ -13,7 +13,7 @@ Update-AriaLocalUserPasswordComplexity [-server] <String> [-user] <String> [-pas
  [[-sequence] <Int32>] [-json] [[-policyPath] <String>] [[-policyFile] <String>] [<CommonParameters>]
 ```
 
-## DESCRIPTION
+## Description
 
 The `Update-AriaLocalUserPasswordComplexity` cmdlet configures the password complexity for local users
 
@@ -33,7 +33,7 @@ This Example updates the VMware Aria Automation nodes with new values for each e
 Update-AriaLocalUserPasswordComplexity -server sf0-vcf01 -user admin@local -pass VMware1!VMware1 -product vra -json -reportPath "F:\" -policyFile "passwordPolicyConfig.json"
 ```
 
-This Example updates the VMware Aria Automation using Jthe SON file of preset values.
+This example updates the VMware Aria Automation using the JSON file of preset values.
 
 ## Parameters
 
@@ -87,7 +87,15 @@ Accept wildcard characters: False
 
 ### -product
 
-The product to configure.
+The product to configure. One of: `vra`, `vrops`, `vrli`, `vrslcm`, and `vrni`.
+
+| Product                             | Product Option |
+|-------------------------------------|----------------|
+| VMware Aria Suite Lifecycle         | `vrslcm`       |
+| VMware Aria Operations              | `vrops`        |
+| VMware Aria Operations for Logs     | `vrli`         |
+| VMware Aria Operations for Networks | `vrni`         |
+| VMware Aria Automation              | `vra`          |
 
 ```yaml
 Type: String
