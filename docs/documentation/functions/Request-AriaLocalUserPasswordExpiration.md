@@ -19,6 +19,8 @@ The `Request-pcaPasswordExpiration` cmdlet retrieves the VMware Aria Automation 
 - Validates that network connectivity and authentication is possible to VMware Aria Suite Lifecycle.
 - Retrieves the password expiration policy.
 
+--8<-- "./docs/snippets/aria-parameters.md"
+
 ## Examples
 
 ### Example 1

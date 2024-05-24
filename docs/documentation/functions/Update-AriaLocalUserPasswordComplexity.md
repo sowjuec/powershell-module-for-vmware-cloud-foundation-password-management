@@ -15,7 +15,9 @@ Update-AriaLocalUserPasswordComplexity [-server] <String> [-user] <String> [-pas
 
 ## Description
 
-The `Update-AriaLocalUserPasswordComplexity` cmdlet configures the password complexity for local users
+The `Update-AriaLocalUserPasswordComplexity` cmdlet configures the password complexity for local users.
+
+--8<-- "./docs/snippets/aria-parameters.md"
 
 ## Examples
 

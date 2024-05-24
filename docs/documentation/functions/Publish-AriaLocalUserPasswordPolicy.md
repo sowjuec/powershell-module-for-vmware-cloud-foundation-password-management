@@ -30,6 +30,8 @@ The cmdlet connects to the SDDC Manager using the -server, -user, and -pass valu
 - Validates that network connectivity and authentication is possible to SDDC Manager.
 - Validates which VMware Aria products are installed.
 
+--8<-- "./docs/snippets/aria-parameters.md"
+
 ## Examples
 
 ### Example 1

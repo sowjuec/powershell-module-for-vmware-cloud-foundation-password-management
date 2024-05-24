@@ -12,10 +12,6 @@
 
     # Version number of this module.
     ModuleVersion     = '1.8.1.1001'
-
-    # Supported PSEditions
-    # CompatiblePSEditions = @()
-
     # ID used to uniquely identify this module
     GUID              = '34e5a0c7-6e6e-4f72-8b3c-1c28248f8ac9'
 
@@ -141,6 +137,10 @@
     # HelpInfo URI of this module
     # HelpInfoURI = ''
 
+    # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
+    # DefaultCommandPrefix = ''
+
+}
     # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
     # DefaultCommandPrefix = ''
 

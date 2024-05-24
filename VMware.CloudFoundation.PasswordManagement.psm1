@@ -9493,7 +9493,6 @@ Function Get-AriaLocalUserAccountLockout {
         Write-Error $_.Exception.Message
     }
 }
-Export-ModuleMember -Function Get-AriaLocalUserAccountLockout
 
 Function Get-AriaLocalUserPasswordComplexity {
     <#
@@ -9604,7 +9603,6 @@ Function Get-AriaLocalUserPasswordComplexity {
         Write-Error $_.Exception.Message
     }
 }
-Export-ModuleMember -Function Get-AriaLocalUserPasswordComplexity
 
 Function Get-AriaLocalUserPasswordExpiration {
     <#
@@ -9735,7 +9733,6 @@ Function Get-AriaLocalUserPasswordExpiration {
         }
     }
 }
-Export-ModuleMember -Function Get-AriaLocalUserPasswordExpiration
 
 Function Publish-AriaLocalUserPasswordPolicy {
     <#

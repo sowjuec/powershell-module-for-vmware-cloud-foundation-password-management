@@ -174,7 +174,6 @@ nav:
       - Aria:
         - Publish-AriaLocalUserPasswordPolicy: documentation/functions/Publish-AriaLocalUserPasswordPolicy.md
         - Request-AriaLocalUserAccountLockout: documentation/functions/Request-AriaLocalUserAccountLockout.md
-        - Get-AriaLocalUserAccountLockout: documentation/functions/Get-AriaLocalUserAccountLockout.md
         - Update-AriaLocalUserAccountLockout: documentation/functions/Update-AriaLocalUserPasswordAccountLockout.md
     - Password Expiration:
       - SDDC Manager:
@@ -212,7 +211,6 @@ nav:
       - Aria:
         - Publish-AriaLocalUserPasswordPolicy: documentation/functions/Publish-AriaLocalUserPasswordPolicy.md
         - Request-AriaLocalUserPasswordExpiration: documentation/functions/Request-AriaLocalUserPasswordExpiration.md
-        - Get-AriaLocalUserPasswordExpiration: documentation/functions/Get-AriaLocalUserPasswordExpiration.md
         - Update-AriaLocalUserPasswordExpiration: documentation/functions/Update-AriaLocalUserPasswordExpiration.md
     - Password Complexity:
       - SDDC Manager:
@@ -249,7 +247,6 @@ nav:
       - Aria:
         - Publish-AriaLocalUserPasswordPolicy: documentation/functions/Publish-AriaLocalUserPasswordPolicy.md
         - Request-AriaLocalUserPasswordComplexity: documentation/functions/Request-AriaLocalUserPasswordComplexity.md
-        - Get-AriaLocalUserPasswordComplexity: documentation/functions/Get-AriaLocalUserPasswordComplexity.md
         - Update-AriaLocalUserPasswordComplexity: documentation/functions/Update-AriaLocalUserPasswordComplexity.md
     - Password Rotation:
       - Publish-PasswordRotationPolicy: documentation/functions/Publish-PasswordRotationPolicy.md
