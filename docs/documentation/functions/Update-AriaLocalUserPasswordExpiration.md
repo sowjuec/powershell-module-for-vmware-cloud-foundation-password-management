@@ -14,7 +14,9 @@ Update-AriaLocalUserPasswordExpiration [-server] <String> [-user] <String> [-pas
 
 ## Description
 
-The `Update-AriaLocalUserPasswordExpiration` cmdlet configures the password expiration for local users
+The `Update-AriaLocalUserPasswordExpiration` cmdlet configures the password expiration for local users.
+
+--8<-- "./docs/snippets/aria-parameters.md"
 
 ## Examples
 

@@ -19,6 +19,8 @@ The `Request-AriaLocalUserAccountLockout` cmdlet retrieves the VMware Aria Autom
 - Validates that network connectivity and authentication is possible to VMware Aria Suite Lifecycle.
 - Retrieves the password account lockout policy.
 
+--8<-- "./docs/snippets/aria-parameters.md"
+
 ## Examples
 
 ### Example 1

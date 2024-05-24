@@ -14,7 +14,10 @@ Update-AriaLocalUserPasswordAccountLockout [-server] <String> [-user] <String> [
 
 ## Description
 
-The `Update-AriaLocalUserPasswordAccountLockout` cmdlet configures the password account lockout for local users
+The `Update-AriaLocalUserPasswordAccountLockout` cmdlet configures the password account lockout for local users.
+Products that are supported:
+
+--8<-- "./docs/snippets/aria-parameters.md"
 
 ## Examples
 

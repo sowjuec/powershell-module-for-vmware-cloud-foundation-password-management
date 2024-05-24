@@ -54,6 +54,7 @@ Chore:
 - Added Pester tests for password rotation. [GH-185](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/185)
 - Updated `VMware.PowerCLI` module dependency from v13.1.0 to v13.2.1. [GH-179](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/179)
 - Updated `PowerValidatedSolutions` from v2.8.0 to v2.9.0. [GH-179](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/179)
+- Updated documentation to add products. [GH-192](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/192)
 
 ## v1.7.1
 

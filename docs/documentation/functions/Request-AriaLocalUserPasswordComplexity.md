@@ -19,6 +19,8 @@ The `Request-AriaLocalUserPasswordComplexity` cmdlet retrieves the VMware Aria p
 - Validates that network connectivity and authentication is possible to VMware Aria Suite Lifecycle.
 - Retrieves the password complexity policy.
 
+--8<-- "./docs/snippets/aria-parameters.md"
+
 ## Examples
 
 ### Example 1
