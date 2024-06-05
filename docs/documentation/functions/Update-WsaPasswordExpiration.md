@@ -2,9 +2,7 @@
 
 ## Synopsis
 
-Updates the password expiration policy for a Workspace ONE Access instance.
-
---8<-- "./docs/snippets/wsa-cmdlet-tip.md"
+Updates the password expiration policy for Workspace ONE Access instance.
 
 ## Syntax
 

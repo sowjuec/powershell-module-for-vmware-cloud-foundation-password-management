@@ -70,7 +70,7 @@ Publish-PasswordRotationPolicy -server sfo-vcf01.sfo.rainpole.io -user administr
 
 This example publishes the credential password rotation settings for all resource types managed by SDDC Manager for all workload domains in JSON format.
 
-## PARAMETERS
+## Parameters
 
 ### -server
 

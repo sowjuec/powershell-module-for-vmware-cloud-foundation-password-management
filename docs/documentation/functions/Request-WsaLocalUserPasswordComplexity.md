@@ -2,7 +2,7 @@
 
 ## Synopsis
 
-Retrieves the local user password complexity policy for Workspace ONE Access for Workspace ONE Access.
+Retrieves the local user password complexity policy for Workspace ONE Access.
 
 ## Syntax
 
@@ -12,12 +12,12 @@ Request-WsaLocalUserPasswordComplexity -server <String> -user <String> -pass <St
 
 ## Description
 
-The `Request-WsaLocalUserPasswordComplexity` cmdlet retrieves the local user password complexity policy forWorkspace ONE Access.
+The `Request-WsaLocalUserPasswordComplexity` cmdlet retrieves the local user password complexity policy for Workspace ONE Access.
 The cmdlet connects to SDDC Manager using the `-server`, `-user`, and `-pass` values:
 
 - Validates that network connectivity and authentication is possible to SDDC Manager
 - Validates that network connectivity and authentication is possible to vCenter Server
-- Retrieves the local user password complexity policy for Workspace ONE Access for Workspace ONE Access
+- Retrieves the local user password complexity policy for Workspace ONE Access
 
 ## Examples
 

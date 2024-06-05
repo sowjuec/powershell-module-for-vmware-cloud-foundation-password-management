@@ -54,7 +54,7 @@ Request-PasswordRotationPolicy -server sfo-vcf01.sfo.rainpole.io -user administr
 
 This example retrieves the credential password rotation settings for the NSX Manager accounts managed by SDDC Manager for the sfo-m01 workload domain.
 
-## PARAMETERS
+## Parameters
 
 ### -server
 
