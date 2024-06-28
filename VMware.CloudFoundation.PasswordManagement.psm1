@@ -10976,7 +10976,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     $requiredConfig = (Get-PasswordPolicyConfig -version $version -reportPath $policyPath -policyFile $policyFile ).AriaLifecycle.accountLockout
                     $photonRelease = Invoke-VMscript -VM $vcfVrslcmDetails.fqdn.split('.')[0] -ScriptText $photonScript -GuestUser $vcfVrslcmDetails.rootUser -GuestPassword $vcfVrslcmDetails.rootPassword
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         $scriptCheck = " cat /etc/security/faillock.conf"
                     } else {
                         $scriptCheck = " cat /etc/pam.d/system-auth"
@@ -10987,12 +10987,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     # failures = Maximum number of authentication failures before the account is locked (Default = 3)
                     $failures = $requiredConfig.maxFailures
 
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/faillock.conf"
                     } else {
                         "/etc/pam.d/system-auth"
                     }
-                    $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/deny = [-]?[0-9]+/deny = $failures/g"
                     } else {
                         ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11002,7 +11002,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     if ($checkKeys.ScriptOutput -match "# deny =" -or $checkKeys.ScriptOutput -match "deny=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$failuresRegex' $configFile"
                     } else {
-                        $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/deny = [-]?[0-9]+/deny = $failures/g"
                         } else {
                             ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11013,12 +11013,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     # unlock_time = Amount of time in seconds that the account remains locked (Default = 900)
                     $unlockInterval = $requiredConfig.unlockInterval
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/faillock.conf"
                     } else {
                         "/etc/pam.d/system-auth"
                     }
-                    $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         ";s/unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                     } else {
                         ";s/unlock_time=[-]?[0-9]+/unlock_time=$unlockInterval/g"
@@ -11028,7 +11028,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     if ($checkKeys.ScriptOutput -match "^# unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "unlock_time=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$unlockIntervalRegex' $configFile"
                     } else {
-                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/^unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                         } else {
                             ";s/(^| )unlock_time=[-]?[0-9]+/\1unlock_time=$unlockInterval/g"
@@ -11039,12 +11039,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     # root_unlock_time = Amount of time in seconds that the root account remains locked (Default = 900)
                     $rootUnlockInterval = $requiredConfig.rootUnlockInterval
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/faillock.conf"
                     } else {
                         "/etc/pam.d/system-auth"
                     }
-                    $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/root_unlock_time= [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                     } else {
                         ";s/root_unlock_time=[-]?[0-9]+/root_unlock_time=$rootUnlockInterval/"
@@ -11054,7 +11054,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     if ($checkKeys.ScriptOutput -match "^# root_unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "root_unlock_time=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$rootUnlockIntervalRegex' $configFile"
                     } else {
-                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/^root_unlock_time = [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                         } else {
                             ";s/(^| )root_unlock_time=[-]?[0-9]+/\1root_unlock_time=$rootUnlockInterval/g"
@@ -11073,7 +11073,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         $vropsusername = (Get-vRSLCMLockerPassword -vmid $vropspassword.passwordvmid).userName
                         $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser $vropsusername -GuestPassword $vropspassword.password
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             $scriptCheck = " cat /etc/security/faillock.conf"
                         } else {
                             $scriptCheck = " cat /etc/pam.d/system-password"
@@ -11083,11 +11083,11 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         # failures = Maximum number of authentication failures before the account is locked (Default = 3)
                         $failures = $requiredConfig.maxFailures
 
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                         }
-                        $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/deny = [-]?[0-9]+/deny = $failures/g"
                         } else {
                             ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11097,7 +11097,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "# deny =" -or $checkKeys.ScriptOutput -match "deny=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$failuresRegex' $configFile"
                         } else {
-                            $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/deny = [-]?[0-9]+/deny = $failures/g"
                             } else {
                                 ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11108,12 +11108,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                         # unlock_time = Amount of time in seconds that the account remains locked (Default = 900)
                         $unlockInterval = $requiredConfig.unlockInterval
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                         } else {
                             ";s/unlock_time=[-]?[0-9]+/unlock_time=$unlockInterval/g"
@@ -11123,7 +11123,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$unlockIntervalRegex' $configFile"
                         } else {
-                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                             } else {
                                 ";s/(^| )unlock_time=[-]?[0-9]+/\1unlock_time=$unlockInterval/g"
@@ -11134,12 +11134,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                         # root_unlock_time = Amount of time in seconds that the root account remains locked (Default = 900)
                         $rootUnlockInterval = $requiredConfig.rootUnlockInterval
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/root_unlock_time= [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                         } else {
                             ";s/root_unlock_time=[-]?[0-9]+/root_unlock_time=$rootUnlockInterval/"
@@ -11149,7 +11149,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# root_unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "root_unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$rootUnlockIntervalRegex' $configFile"
                         } else {
-                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^root_unlock_time = [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                             } else {
                                 ";s/(^| )root_unlock_time=[-]?[0-9]+/\1root_unlock_time=$rootUnlockInterval/g"
@@ -11168,7 +11168,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         $vrlipassword = (Get-vRSLCMProductPassword -productId vrli -nodeFqdn $node -vrslcmRootPass $vcfVrslcmDetails.rootPassword)
                         $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser root -GuestPassword $vrlipassword.password
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             $scriptCheck = " cat /etc/security/faillock.conf"
                         } else {
                             $scriptCheck = " cat /etc/pam.d/system-password"
@@ -11179,12 +11179,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         # failures = Maximum number of authentication failures before the account is locked (Default = 3)
                         $failures = $requiredConfig.maxFailures
 
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/deny = [-]?[0-9]+/deny = $failures/g"
                         } else {
                             ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11194,7 +11194,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "# deny =" -or $checkKeys.ScriptOutput -match "deny=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$failuresRegex' $configFile"
                         } else {
-                            $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/deny = [-]?[0-9]+/deny = $failures/g"
                             } else {
                                 ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11205,12 +11205,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                         # unlock_time = Amount of time in seconds that the account remains locked (Default = 900)
                         $unlockInterval = $requiredConfig.unlockInterval
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                         } else {
                             ";s/unlock_time=[-]?[0-9]+/unlock_time=$unlockInterval/g"
@@ -11220,7 +11220,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$unlockIntervalRegex' $configFile"
                         } else {
-                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                             } else {
                                 ";s/(^| )unlock_time=[-]?[0-9]+/\1unlock_time=$unlockInterval/g"
@@ -11231,12 +11231,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                         # root_unlock_time = Amount of time in seconds that the root account remains locked (Default = 900)
                         $rootUnlockInterval = $requiredConfig.rootUnlockInterval
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/root_unlock_time= [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                         } else {
                             ";s/root_unlock_time=[-]?[0-9]+/root_unlock_time=$rootUnlockInterval/"
@@ -11246,7 +11246,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# root_unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "root_unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$rootUnlockIntervalRegex' $configFile"
                         } else {
-                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^root_unlock_time = [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                             } else {
                                 ";s/(^| )root_unlock_time=[-]?[0-9]+/\1root_unlock_time=$rootUnlockInterval/g"
@@ -11321,7 +11321,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         $vrausername = (Get-vRSLCMLockerPassword -vmid $vrapassword.passwordvmid).userName
                         $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser $vrausername -GuestPassword $vrapassword.password
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             $scriptCheck = " cat /etc/security/faillock.conf"
                         } else {
                             $scriptCheck = " cat /etc/pam.d/system-auth"
@@ -11331,19 +11331,19 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         # failures = Maximum number of authentication failures before the account is locked (Default = 3)
                         $failures = $requiredConfig.maxFailures
 
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/deny = [-]?[0-9]+/deny = $failures/g"
                         } else {
                             ";s/deny=[-]?[0-9]+/deny=$failures/"
                         }
                         if ($checkKeys.ScriptOutput -match "# deny =" -or $checkKeys.ScriptOutput -match "deny=") {
                         } else {
-                            $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/deny = [-]?[0-9]+/deny = $failures/g"
                             } else {
                                 ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11354,12 +11354,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                         # unlock_time = Amount of time in seconds that the account remains locked (Default = 86400)
                         $unlockInterval = $requiredConfig.unlockInterval
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                         } else {
                             ";s/unlock_time=[-]?[0-9]+/unlock_time=$unlockInterval/g"
@@ -11369,7 +11369,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$unlockIntervalRegex' $configFile"
                         } else {
-                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                             } else {
                                 ";s/(^| )unlock_time=[-]?[0-9]+/\1unlock_time=$unlockInterval/g"
@@ -11380,12 +11380,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                         # root_unlock_time = Amount of time in seconds that the root account remains locked (Default = 300)
                         $rootUnlockInterval = $requiredConfig.rootUnlockInterval
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/root_unlock_time= [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                         } else {
                             ";s/root_unlock_time=[-]?[0-9]+/root_unlock_time=$rootUnlockInterval/"
@@ -11395,7 +11395,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# root_unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "root_unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$rootUnlockIntervalRegex' $configFile"
                         } else {
-                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^root_unlock_time = [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                             } else {
                                 ";s/(^| )root_unlock_time=[-]?[0-9]+/\1root_unlock_time=$rootUnlockInterval/g"
@@ -11413,7 +11413,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
             if ($product -eq "vrslcm") {
                 $photonRelease = Invoke-VMscript -VM $vcfVrslcmDetails.fqdn.split('.')[0] -ScriptText $photonScript -GuestUser $vcfVrslcmDetails.rootUser -GuestPassword $vcfVrslcmDetails.rootPassword
 
-                if ($photonRelease.ScriptOutput -match "4.0") {
+                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                     $scriptCheck = " cat /etc/security/pwquality.conf"
                 } else {
                     $scriptCheck = " cat /etc/pam.d/system-password"
@@ -11423,12 +11423,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                 if ($PsBoundParameters.ContainsKey("failures")) {
                     # failures = Maximum number of authentication failures before the account is locked (Default = 3)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/faillock.conf"
                     } else {
                         "/etc/pam.d/system-auth"
                     }
-                    $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/deny = [-]?[0-9]+/deny = $failures/g"
                     } else {
                         ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11438,7 +11438,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     if ($checkKeys.ScriptOutput -match "# deny =" -or $checkKeys.ScriptOutput -match "deny=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$failuresRegex' $configFile"
                     } else {
-                        $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/deny = [-]?[0-9]+/deny = $failures/g"
                         } else {
                             ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11449,12 +11449,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                 }
                 if ($PsBoundParameters.ContainsKey("unlockInterval")) {
                     # unlock_time = Amount of time in seconds that the account remains locked (Default = 900)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/faillock.conf"
                     } else {
                         "/etc/pam.d/system-auth"
                     }
-                    $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         ";s/unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                     } else {
                         ";s/unlock_time=[-]?[0-9]+/unlock_time=$unlockInterval/g"
@@ -11464,7 +11464,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     if ($checkKeys.ScriptOutput -match "^# unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "unlock_time=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$unlockIntervalRegex' $configFile"
                     } else {
-                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/^unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                         } else {
                             ";s/(^| )unlock_time=[-]?[0-9]+/\1unlock_time=$unlockInterval/g"
@@ -11477,12 +11477,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                 if ($PsBoundParameters.ContainsKey("rootUnlockInterval")) {
                     # root_unlock_time = Amount of time in seconds that the root account remains locked (Default = 900)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/faillock.conf"
                     } else {
                         "/etc/pam.d/system-auth"
                     }
-                    $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/root_unlock_time= [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                     } else {
                         ";s/root_unlock_time=[-]?[0-9]+/root_unlock_time=$rootUnlockInterval/"
@@ -11492,7 +11492,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     if ($checkKeys.ScriptOutput -match "^# root_unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "root_unlock_time=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$rootUnlockIntervalRegex' $configFile"
                     } else {
-                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/^root_unlock_time = [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                         } else {
                             ";s/(^| )root_unlock_time=[-]?[0-9]+/\1root_unlock_time=$rootUnlockInterval/g"
@@ -11511,7 +11511,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     $vropsusername = (Get-vRSLCMLockerPassword -vmid $vropspassword.passwordvmid).userName
                     $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser $vropsusername -GuestPassword $vropspassword.password
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         $scriptCheck = " cat /etc/security/pwquality.conf"
                     } else {
                         $scriptCheck = " cat /etc/pam.d/system-password"
@@ -11521,12 +11521,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("failures")) {
                         # failures = Maximum number of authentication failures before the account is locked (Default = 3)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/deny = [-]?[0-9]+/deny = $failures/g"
                         } else {
                             ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11536,7 +11536,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "# deny =" -or $checkKeys.ScriptOutput -match "deny=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$failuresRegex' $configFile"
                         } else {
-                            $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/deny = [-]?[0-9]+/deny = $failures/g"
                             } else {
                                 ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11548,12 +11548,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("unlockInterval")) {
                         # unlock_time = Amount of time in seconds that the account remains locked (Default = 900)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                         } else {
                             ";s/unlock_time=[-]?[0-9]+/unlock_time=$unlockInterval/g"
@@ -11563,7 +11563,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$unlockIntervalRegex' $configFile"
                         } else {
-                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                             } else {
                                 ";s/(^| )unlock_time=[-]?[0-9]+/\1unlock_time=$unlockInterval/g"
@@ -11575,12 +11575,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("rootUnlockInterval")) {
                         # root_unlock_time = Amount of time in seconds that the root account remains locked (Default = 900)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/root_unlock_time= [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                         } else {
                             ";s/root_unlock_time=[-]?[0-9]+/root_unlock_time=$rootUnlockInterval/"
@@ -11590,7 +11590,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# root_unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "root_unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$rootUnlockIntervalRegex' $configFile"
                         } else {
-                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^root_unlock_time = [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                             } else {
                                 ";s/(^| )root_unlock_time=[-]?[0-9]+/\1root_unlock_time=$rootUnlockInterval/g"
@@ -11610,7 +11610,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     $vrlipassword = (Get-vRSLCMProductPassword -productId vrli -nodeFqdn $node -vrslcmRootPass $vcfVrslcmDetails.rootPassword)
                     $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser root -GuestPassword $vrlipassword.password
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         $scriptCheck = " cat /etc/security/faillock.conf"
                     } else {
                         $scriptCheck = " cat /etc/pam.d/system-auth"
@@ -11620,12 +11620,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("failures")) {
                         # failures = Maximum number of authentication failures before the account is locked (Default = 3)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/deny = [-]?[0-9]+/deny = $failures/g"
                         } else {
                             ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11635,7 +11635,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "# deny =" -or $checkKeys.ScriptOutput -match "deny=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$failuresRegex' $configFile"
                         } else {
-                            $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/deny = [-]?[0-9]+/deny = $failures/g"
                             } else {
                                 ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11647,12 +11647,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("unlockInterval")) {
                         # unlock_time = Amount of time in seconds that the account remains locked (Default = 900)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                         } else {
                             ";s/unlock_time=[-]?[0-9]+/unlock_time=$unlockInterval/g"
@@ -11662,7 +11662,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$unlockIntervalRegex' $configFile"
                         } else {
-                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                             } else {
                                 ";s/(^| )unlock_time=[-]?[0-9]+/\1unlock_time=$unlockInterval/g"
@@ -11676,12 +11676,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("rootUnlockInterval")) {
                         # root_unlock_time = Amount of time in seconds that the root account remains locked (Default = 900)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/root_unlock_time= [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                         } else {
                             ";s/root_unlock_time=[-]?[0-9]+/root_unlock_time=$rootUnlockInterval/"
@@ -11691,7 +11691,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# root_unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "root_unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$rootUnlockIntervalRegex' $configFile"
                         } else {
-                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^root_unlock_time = [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                             } else {
                                 ";s/(^| )root_unlock_time=[-]?[0-9]+/\1root_unlock_time=$rootUnlockInterval/g"
@@ -11775,7 +11775,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                     $vrausername = (Get-vRSLCMLockerPassword -vmid $vrapassword.passwordvmid).userName
                     $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser $vrausername -GuestPassword $vrapassword.password
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         $scriptCheck = " cat /etc/security/faillock.conf"
                     } else {
                         $scriptCheck = " cat /etc/pam.d/system-auth"
@@ -11785,12 +11785,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("failures")) {
                         # failures = Maximum number of authentication failures before the account is locked (Default = 3)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/deny = [-]?[0-9]+/deny = $failures/g"
                         } else {
                             ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11800,7 +11800,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "# deny =" -or $checkKeys.ScriptOutput -match "deny=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$failuresRegex' $configFile"
                         } else {
-                            $failuresRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $failuresRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/deny = [-]?[0-9]+/deny = $failures/g"
                             } else {
                                 ";s/deny=[-]?[0-9]+/deny=$failures/"
@@ -11812,12 +11812,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("unlockInterval")) {
                         # unlock_time = Amount of time in seconds that the account remains locked (Default = 86400)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                         } else {
                             ";s/unlock_time=[-]?[0-9]+/unlock_time=$unlockInterval/g"
@@ -11827,7 +11827,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$unlockIntervalRegex' $configFile"
                         } else {
-                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $unlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^unlock_time = [-]?[0-9]+/unlock_time = $unlockInterval/g"
                             } else {
                                 ";s/(^| )unlock_time=[-]?[0-9]+/\1unlock_time=$unlockInterval/g"
@@ -11839,12 +11839,12 @@ Function Update-AriaLocalUserPasswordAccountLockout {
 
                     if ($PsBoundParameters.ContainsKey("rootUnlockInterval")) {
                         # root_unlock_time = Amount of time in seconds that the root account remains locked (Default = 300)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/faillock.conf"
                         } else {
                             "/etc/pam.d/system-auth"
                         }
-                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/root_unlock_time= [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                         } else {
                             ";s/root_unlock_time=[-]?[0-9]+/root_unlock_time=$rootUnlockInterval/"
@@ -11854,7 +11854,7 @@ Function Update-AriaLocalUserPasswordAccountLockout {
                         if ($checkKeys.ScriptOutput -match "^# root_unlock_time =" -or $checkKeys.ScriptOutput.Trim() -eq "root_unlock_time=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$rootUnlockIntervalRegex' $configFile"
                         } else {
-                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $rootUnlockIntervalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/^root_unlock_time = [-]?[0-9]+/root_unlock_time = $rootUnlockInterval/g"
                             } else {
                                 ";s/(^| )root_unlock_time=[-]?[0-9]+/\1root_unlock_time=$rootUnlockInterval/g"
@@ -11987,7 +11987,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     $requiredConfig = (Get-PasswordPolicyConfig -version $version -reportPath $policyPath -policyFile $policyFile ).AriaLifecycle.passwordComplexity
                     $photonRelease = Invoke-VMscript -VM $vcfVrslcmDetails.fqdn.split('.')[0] -ScriptText $photonScript -GuestUser $vcfVrslcmDetails.rootUser -GuestPassword $vcfVrslcmDetails.rootPassword
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         $scriptCheck = " cat /etc/security/pwquality.conf"
                     } else {
                         $scriptCheck = " cat /etc/pam.d/system-password"
@@ -11997,12 +11997,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     # minlen = Minimum password length (Default = 8)
                     $minLength = $requiredConfig.minLength
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                     } else {
                         ";s/minlen=[-]?[0-9]+/minlen=$minLength/"
@@ -12012,7 +12012,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# minlen =" -or $checkKeys.ScriptOutput -match "minlen=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$minLengthRegex' $configFile"
                     } else {
-                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ minlen=$minLength/"
@@ -12023,12 +12023,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     # ucredit = Maximum number of uppercase characters that will generate a credit (Default = -1)
                     $uppercase = $requiredConfig.minUppercase
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                     } else {
                         ";s/ucredit=[-]?[0-9]+/ucredit=$uppercase/"
@@ -12038,7 +12038,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# ucredit =" -or $checkKeys.ScriptOutput -match "ucredit=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uppercaseRegex' $configFile"
                     } else {
-                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ ucredit=$uppercase/"
@@ -12049,12 +12049,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     # lcredit = Maximum number of lowercase characters that will generate a credit (Default = -1)
                     $lowercase = $requiredConfig.minLowercase
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                     } else {
                         ";s/lcredit=[-]?[0-9]+/lcredit=$lowercase/"
@@ -12064,7 +12064,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# lcredit =" -or $checkKeys.ScriptOutput -match "lcredit=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$lowercaseRegex' $configFile"
                     } else {
-                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ lcredit=$lowercase/"
@@ -12075,12 +12075,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     # dcredit = Maximum number of digits that will generate a credit (Default = -1)
                     $numerical = $requiredConfig.minNumerical
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                     } else {
                         ";s/dcredit=[-]?[0-9]+/dcredit=$numerical/"
@@ -12090,7 +12090,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# dcredit =" -or $checkKeys.ScriptOutput -match "dcredit=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$numericalRegex' $configFile"
                     } else {
-                        $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ dcredit=$numerical/"
@@ -12101,12 +12101,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     # ocredit = Maximum number of other characters that will generate a credit (Default = -1)
                     $special = $requiredConfig.minSpecial
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                     } else {
                         ";s/ocredit=[-]?[0-9]+/ocredit=$special/"
@@ -12116,7 +12116,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# ocredit =" -or $checkKeys.ScriptOutput -match "ocredit=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$specialRegex' $configFile"
                     } else {
-                        $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ ocredit=$special/"
@@ -12127,12 +12127,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     # difok = Minimum number of characters that must be different from the old password (Default = 4)
                     $unique = $requiredConfig.minUnique
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/difok = [-]?[0-9]+/difok = $unique/g"
                     } else {
                         ";s/difok=[-]?[0-9]+/difok=$unique/"
@@ -12142,7 +12142,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# difok =" -or $checkKeys.ScriptOutput -match "difok=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uniqueRegex' $configFile"
                     } else {
-                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/difok = [-]?[0-9]+/difok = $unique/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ difok=$unique/"
@@ -12153,12 +12153,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     # minclass = Minimum number of character types that must be used (e.g., uppercase, lowercase, digits, other) (Default = 4)
                     $class = $requiredConfig.minClass
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/minclass = [-]?[0-9]+/minclass = $class/g"
                     } else {
                         ";s/minclass=[-]?[0-9]+/minclass=$class/"
@@ -12168,7 +12168,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# minclass =" -or $checkKeys.ScriptOutput -match "minclass=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$classRegex' $configFile"
                     } else {
-                        $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/minclass = [-]?[0-9]+/minclass = $class/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ minclass=$class/"
@@ -12208,7 +12208,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     # retry = Maximum number of retries of password (Default = 3)
                     $retry = $requiredConfig.retries
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         if ($checkKeys.ScriptOutput -match "# retry =") {
                             $scriptCommand = $null
                             $retryCommand = $null
@@ -12216,7 +12216,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             $retryCommand += "/retry/s/ *# *//g"
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -12229,7 +12229,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             $retryCommand += "s/retry = [-]?[0-9]+/retry = $retry/g"
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -12245,7 +12245,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             $retryCommand += ";s/retry = [-]?[0-9]+/retry = $retry/g"
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -12272,7 +12272,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         }
                         $scriptCommand += $retryCommand
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             $scriptCommand += "' /etc/security/pwquality.conf"
                         } else {
                             $scriptCommand += "' /etc/pam.d/system-password"
@@ -12293,7 +12293,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         $vropsusername = (Get-vRSLCMLockerPassword -vmid $vropspassword.passwordvmid).userName
                         $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser $vropsusername -GuestPassword $vropspassword.password
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             $scriptCheck = " cat /etc/security/pwquality.conf; cat /etc/security/pwhistory.conf"
                         } else {
                             $scriptCheck = " cat /etc/pam.d/system-password"
@@ -12303,12 +12303,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # minlen = Minimum password length (Default = 8)
                         $minLength = $requiredConfig.minLength
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                         } else {
                             ";s/minlen=[-]?[0-9]+/minlen=$minLength/"
@@ -12318,7 +12318,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minlen =" -or $checkKeys.ScriptOutput -match "minlen=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$minLengthRegex' $configFile"
                         } else {
-                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minlen=$minLength/"
@@ -12329,12 +12329,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # ucredit = Maximum number of uppercase characters that will generate a credit (Default = -1)
                         $uppercase = $requiredConfig.minUppercase
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                         } else {
                             ";s/ucredit=[-]?[0-9]+/ucredit=$uppercase/"
@@ -12344,7 +12344,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ucredit =" -or $checkKeys.ScriptOutput -match "ucredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uppercaseRegex' $configFile"
                         } else {
-                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ucredit=$uppercase/"
@@ -12355,12 +12355,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # lcredit = Maximum number of lowercase characters that will generate a credit (Default = -1)
                         $lowercase = $requiredConfig.minLowercase
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                         } else {
                             ";s/lcredit=[-]?[0-9]+/lcredit=$lowercase/"
@@ -12370,7 +12370,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# lcredit =" -or $checkKeys.ScriptOutput -match "lcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$lowercaseRegex' $configFile"
                         } else {
-                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ lcredit=$lowercase/"
@@ -12381,12 +12381,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # dcredit = Maximum number of digits that will generate a credit (Default = -1)
                         $numerical = $requiredConfig.minNumerical
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                         } else {
                             ";s/dcredit=[-]?[0-9]+/dcredit=$numerical/"
@@ -12396,7 +12396,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# dcredit =" -or $checkKeys.ScriptOutput -match "dcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$numericalRegex' $configFile"
                         } else {
-                            $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ dcredit=$numerical/"
@@ -12407,12 +12407,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # ocredit = Maximum number of other characters that will generate a credit (Default = -1)
                         $special = $requiredConfig.minSpecial
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                         } else {
                             ";s/ocredit=[-]?[0-9]+/ocredit=$special/"
@@ -12422,7 +12422,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ocredit =" -or $checkKeys.ScriptOutput -match "ocredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$specialRegex' $configFile"
                         } else {
-                            $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ocredit=$special/"
@@ -12433,12 +12433,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # difok = Minimum number of characters that must be different from the old password (Default = 4)
                         $unique = $requiredConfig.minUnique
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/difok = [-]?[0-9]+/difok = $unique/g"
                         } else {
                             ";s/difok=[-]?[0-9]+/difok=$unique/"
@@ -12448,7 +12448,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# difok =" -or $checkKeys.ScriptOutput -match "difok=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uniqueRegex' $configFile"
                         } else {
-                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/difok = [-]?[0-9]+/difok = $unique/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ difok=$unique/"
@@ -12459,12 +12459,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # minclass = Minimum number of character types that must be used (e.g., uppercase, lowercase, digits, other) (Default = 4)
                         $class = $requiredConfig.minClass
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minclass = [-]?[0-9]+/minclass = $class/g"
                         } else {
                             ";s/minclass=[-]?[0-9]+/minclass=$class/"
@@ -12474,7 +12474,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minclass =" -or $checkKeys.ScriptOutput -match "minclass=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$classRegex' $configFile"
                         } else {
-                            $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minclass = [-]?[0-9]+/minclass = $class/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minclass=$class/"
@@ -12485,12 +12485,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # maxsequence = Maximum number of times a single character may be repeated (Default = 0)
                         $sequence = $requiredConfig.maxSequence
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                         } else {
                             ";s/maxsequence=[-]?[0-9]+/maxsequence=$sequence/"
@@ -12500,7 +12500,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# maxrepeat =" -or $checkKeys.ScriptOutput -match "maxsequence=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$sequenceRegex' $configFile"
                         } else {
-                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ maxsequence=$sequence/"
@@ -12512,7 +12512,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         # remember = Maximum number of passwords the system remembers (Default = 5)
                         $history = $requiredConfig.history
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# remember =") {
                                 $scriptCommand = $null
                                 $historyCommand = $null
@@ -12520,7 +12520,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += "/^# remember/s/ *# *//g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12536,7 +12536,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += ";s/remember = [-]?[0-9]+/remember = $history/g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12563,7 +12563,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             }
                             $scriptCommand += $historyCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwhistory.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -12576,7 +12576,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # retry = Maximum number of retries of password (Default = 3)
                         $retry = $requiredConfig.retries
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# retry =") {
                                 $scriptCommand = $null
                                 $retryCommand = $null
@@ -12584,7 +12584,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "/retry/s/ *# *//g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12597,7 +12597,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12613,7 +12613,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += ";s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12640,7 +12640,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             }
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -12662,7 +12662,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         $vrlipassword = (Get-vRSLCMProductPassword -productId vrli -nodeFqdn $node -vrslcmRootPass $vcfVrslcmDetails.rootPassword)
                         $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser root -GuestPassword $vrlipassword.password
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             $scriptCheck = " cat /etc/security/pwquality.conf; cat /etc/security/pwhistory.conf"
                         } else {
                             $scriptCheck = " cat /etc/pam.d/system-password"
@@ -12672,12 +12672,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # minlen = Minimum password length (Default = 8)
                         $minLength = $requiredConfig.minLength
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                         } else {
                             ";s/minlen=[-]?[0-9]+/minlen=$minLength/"
@@ -12687,7 +12687,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minlen =" -or $checkKeys.ScriptOutput -match "minlen=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$minLengthRegex' $configFile"
                         } else {
-                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minlen=$minLength/"
@@ -12698,12 +12698,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # ucredit = Maximum number of uppercase characters that will generate a credit (Default = -1)
                         $uppercase = $requiredConfig.minUppercase
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                         } else {
                             ";s/ucredit=[-]?[0-9]+/ucredit=$uppercase/"
@@ -12713,7 +12713,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ucredit =" -or $checkKeys.ScriptOutput -match "ucredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uppercaseRegex' $configFile"
                         } else {
-                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ucredit=$uppercase/"
@@ -12724,12 +12724,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # lcredit = Maximum number of lowercase characters that will generate a credit (Default = -1)
                         $lowercase = $requiredConfig.minLowercase
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                         } else {
                             ";s/lcredit=[-]?[0-9]+/lcredit=$lowercase/"
@@ -12739,7 +12739,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# lcredit =" -or $checkKeys.ScriptOutput -match "lcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$lowercaseRegex' $configFile"
                         } else {
-                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ lcredit=$lowercase/"
@@ -12750,12 +12750,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # dcredit = Maximum number of digits that will generate a credit (Default = -1)
                         $numerical = $requiredConfig.minNumerical
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                         } else {
                             ";s/dcredit=[-]?[0-9]+/dcredit=$numerical/"
@@ -12765,7 +12765,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# dcredit =" -or $checkKeys.ScriptOutput -match "dcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$numericalRegex' $configFile"
                         } else {
-                            $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ dcredit=$numerical/"
@@ -12776,12 +12776,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # ocredit = Maximum number of other characters that will generate a credit (Default = -1)
                         $special = $requiredConfig.minSpecial
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                         } else {
                             ";s/ocredit=[-]?[0-9]+/ocredit=$special/"
@@ -12791,7 +12791,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ocredit =" -or $checkKeys.ScriptOutput -match "ocredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$specialRegex' $configFile"
                         } else {
-                            $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ocredit=$special/"
@@ -12802,12 +12802,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # difok = Minimum number of characters that must be different from the old password (Default = 4)
                         $unique = $requiredConfig.minUnique
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/difok = [-]?[0-9]+/difok = $unique/g"
                         } else {
                             ";s/difok=[-]?[0-9]+/difok=$unique/"
@@ -12817,7 +12817,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# difok =" -or $checkKeys.ScriptOutput -match "difok=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uniqueRegex' $configFile"
                         } else {
-                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/difok = [-]?[0-9]+/difok = $unique/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ difok=$unique/"
@@ -12828,12 +12828,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # minclass = Minimum number of character types that must be used (e.g., uppercase, lowercase, digits, other) (Default = 4)
                         $class = $requiredConfig.minClass
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minclass = [-]?[0-9]+/minclass = $class/g"
                         } else {
                             ";s/minclass=[-]?[0-9]+/minclass=$class/"
@@ -12843,7 +12843,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minclass =" -or $checkKeys.ScriptOutput -match "minclass=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$classRegex' $configFile"
                         } else {
-                            $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minclass = [-]?[0-9]+/minclass = $class/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minclass=$class/"
@@ -12854,12 +12854,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # maxsequence = Maximum number of times a single character may be repeated (Default = 0)
                         $sequence = $requiredConfig.maxSequence
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                         } else {
                             ";s/maxsequence=[-]?[0-9]+/maxsequence=$sequence/"
@@ -12869,7 +12869,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# maxrepeat =" -or $checkKeys.ScriptOutput -match "maxsequence=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$sequenceRegex' $configFile"
                         } else {
-                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ maxsequence=$sequence/"
@@ -12881,7 +12881,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         # remember = Maximum number of passwords the system remembers (Default = 5)
                         $history = $requiredConfig.history
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# remember =") {
                                 $scriptCommand = $null
                                 $historyCommand = $null
@@ -12889,7 +12889,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += "/^# remember/s/ *# *//g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12905,7 +12905,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += ";s/remember = [-]?[0-9]+/remember = $history/g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12944,7 +12944,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         # retry = Maximum number of retries of password (Default = 3)
                         $retry = $requiredConfig.retries
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# retry =") {
                                 $scriptCommand = $null
                                 $retryCommand = $null
@@ -12952,7 +12952,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "/retry/s/ *# *//g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12965,7 +12965,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -12981,7 +12981,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += ";s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -13007,7 +13007,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "/pam_unix.so/i password  required pam_pwhistory.so use_authtok enforce_for_root retry=$retry"
                             }
                             $scriptCommand += $retryCommand
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -13118,7 +13118,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         $vrausername = (Get-vRSLCMLockerPassword -vmid $vrapassword.passwordvmid).userName
                         $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser $vrausername -GuestPassword $vrapassword.password
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             $scriptCheck = " cat /etc/security/pwquality.conf; cat /etc/security/pwhistory.conf"
                         } else {
                             $scriptCheck = " cat /etc/pam.d/system-password"
@@ -13128,12 +13128,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # minlen = Minimum password length (Default = 8)
                         $minLength = $requiredConfig.minLength
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                         } else {
                             ";s/minlen=[-]?[0-9]+/minlen=$minLength/"
@@ -13143,7 +13143,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minlen =" -or $checkKeys.ScriptOutput -match "minlen=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$minLengthRegex' $configFile"
                         } else {
-                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minlen=$minLength/"
@@ -13154,12 +13154,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # ucredit = Maximum number of uppercase characters that will generate a credit (Default = -1)
                         $uppercase = $requiredConfig.minUppercase
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                         } else {
                             ";s/ucredit=[-]?[0-9]+/ucredit=$uppercase/"
@@ -13169,7 +13169,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ucredit =" -or $checkKeys.ScriptOutput -match "ucredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uppercaseRegex' $configFile"
                         } else {
-                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ucredit=$uppercase/"
@@ -13180,12 +13180,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         $lowercase = $requiredConfig.minLowercase
                         # lcredit = Maximum number of lowercase characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                         } else {
                             ";s/lcredit=[-]?[0-9]+/lcredit=$lowercase/"
@@ -13195,7 +13195,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# lcredit =" -or $checkKeys.ScriptOutput -match "lcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$lowercaseRegex' $configFile"
                         } else {
-                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ lcredit=$lowercase/"
@@ -13206,12 +13206,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # dcredit = Maximum number of digits that will generate a credit (Default = -1)
                         $numerical = $requiredConfig.minNumerical
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                         } else {
                             ";s/dcredit=[-]?[0-9]+/dcredit=$numerical/"
@@ -13221,7 +13221,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# dcredit =" -or $checkKeys.ScriptOutput -match "dcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$numericalRegex' $configFile"
                         } else {
-                            $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ dcredit=$numerical/"
@@ -13232,12 +13232,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # ocredit = Maximum number of other characters that will generate a credit (Default = -1)
                         $special = $requiredConfig.minSpecial
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                         } else {
                             ";s/ocredit=[-]?[0-9]+/ocredit=$special/"
@@ -13247,7 +13247,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ocredit =" -or $checkKeys.ScriptOutput -match "ocredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$specialRegex' $configFile"
                         } else {
-                            $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ocredit=$special/"
@@ -13258,12 +13258,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # difok = Minimum number of characters that must be different from the old password (Default = 4)
                         $unique = $requiredConfig.minUnique
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/difok = [-]?[0-9]+/difok = $unique/g"
                         } else {
                             ";s/difok=[-]?[0-9]+/difok=$unique/"
@@ -13273,7 +13273,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# difok =" -or $checkKeys.ScriptOutput -match "difok=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uniqueRegex' $configFile"
                         } else {
-                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/difok = [-]?[0-9]+/difok = $unique/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ difok=$unique/"
@@ -13284,12 +13284,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # minclass = Minimum number of character types that must be used (e.g., uppercase, lowercase, digits, other) (Default = 4)
                         $class = $requiredConfig.minClass
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minclass = [-]?[0-9]+/minclass = $class/g"
                         } else {
                             ";s/minclass=[-]?[0-9]+/minclass=$class/"
@@ -13299,7 +13299,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minclass =" -or $checkKeys.ScriptOutput -match "minclass=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$classRegex' $configFile"
                         } else {
-                            $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minclass = [-]?[0-9]+/minclass = $class/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minclass=$class/"
@@ -13310,12 +13310,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         # maxsequence = Maximum number of times a single character may be repeated (Default = 0)
                         $sequence = $requiredConfig.maxSequence
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                         } else {
                             ";s/maxsequence=[-]?[0-9]+/maxsequence=$sequence/"
@@ -13325,7 +13325,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# maxrepeat =" -or $checkKeys.ScriptOutput -match "maxsequence=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$sequenceRegex' $configFile"
                         } else {
-                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ maxsequence=$sequence/"
@@ -13337,7 +13337,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         # remember = Maximum number of passwords the system remembers (Default = 5)
                         $history = $requiredConfig.history
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# remember =") {
                                 $scriptCommand = $null
                                 $historyCommand = $null
@@ -13345,7 +13345,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += "/^# remember/s/ *# *//g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -13358,7 +13358,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += "s/remember = [-]?[0-9]+/remember = $history/g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -13374,7 +13374,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += ";s/remember = [-]?[0-9]+/remember = $history/g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -13415,7 +13415,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         # retry = Maximum number of retries of password (Default = 3)
                         $retry = $requiredConfig.retries
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# retry =") {
                                 $scriptCommand = $null
                                 $retryCommand = $null
@@ -13423,7 +13423,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "/retry/s/ *# *//g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -13437,7 +13437,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -13453,7 +13453,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += ";s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -13480,7 +13480,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             }
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -13500,7 +13500,7 @@ Function Update-AriaLocalUserPasswordComplexity {
             if ($product -eq "vrslcm") {
                 $photonRelease = Invoke-VMscript -VM $vcfVrslcmDetails.fqdn.split('.')[0] -ScriptText $photonScript -GuestUser $vcfVrslcmDetails.rootUser -GuestPassword $vcfVrslcmDetails.rootPassword
 
-                if ($photonRelease.ScriptOutput -match "4.0") {
+                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                     $scriptCheck = " cat /etc/security/pwquality.conf"
                 } else {
                     $scriptCheck = " cat /etc/pam.d/system-password"
@@ -13510,12 +13510,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                 if ($PsBoundParameters.ContainsKey("minLength")) {
                     # minlen = Minimum password length (Default = 8)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                     } else {
                         ";s/minlen=[-]?[0-9]+/minlen=$minLength/"
@@ -13525,7 +13525,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# minlen =" -or $checkKeys.ScriptOutput -match "minlen=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$minLengthRegex' $configFile"
                     } else {
-                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ minlen=$minLength/"
@@ -13537,12 +13537,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                 if ($PsBoundParameters.ContainsKey("uppercase")) {
                     # ucredit = Maximum number of uppercase characters that will generate a credit (Default = -1)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                     } else {
                         ";s/ucredit=[-]?[0-9]+/ucredit=$uppercase/"
@@ -13552,7 +13552,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# ucredit =" -or $checkKeys.ScriptOutput -match "ucredit=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uppercaseRegex' $configFile"
                     } else {
-                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ ucredit=$uppercase/"
@@ -13564,12 +13564,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                 if ($PsBoundParameters.ContainsKey("lowercase")) {
                     # lcredit = Maximum number of lowercase characters that will generate a credit (Default = -1)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                     } else {
                         ";s/lcredit=[-]?[0-9]+/lcredit=$lowercase/"
@@ -13579,7 +13579,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# lcredit =" -or $checkKeys.ScriptOutput -match "lcredit=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$lowercaseRegex' $configFile"
                     } else {
-                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ lcredit=$lowercase/"
@@ -13591,12 +13591,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                 if ($PsBoundParameters.ContainsKey("numerical")) {
                     # dcredit = Maximum number of digits that will generate a credit (Default = -1)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                     } else {
                         ";s/dcredit=[-]?[0-9]+/dcredit=$numerical/"
@@ -13606,7 +13606,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# dcredit =" -or $checkKeys.ScriptOutput -match "dcredit=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$numericalRegex' $configFile"
                     } else {
-                        $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ dcredit=$numerical/"
@@ -13618,12 +13618,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                 if ($PsBoundParameters.ContainsKey("special")) {
                     # ocredit = Maximum number of other characters that will generate a credit (Default = -1)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                     } else {
                         ";s/ocredit=[-]?[0-9]+/ocredit=$special/"
@@ -13633,7 +13633,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# ocredit =" -or $checkKeys.ScriptOutput -match "ocredit=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$specialRegex' $configFile"
                     } else {
-                        $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ ocredit=$special/"
@@ -13645,12 +13645,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                 if ($PsBoundParameters.ContainsKey("unique")) {
                     # difok = Minimum number of characters that must be different from the old password (Default = 4)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/difok = [-]?[0-9]+/difok = $unique/g"
                     } else {
                         ";s/difok=[-]?[0-9]+/difok=$unique/"
@@ -13660,7 +13660,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# difok =" -or $checkKeys.ScriptOutput -match "difok=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uniqueRegex' $configFile"
                     } else {
-                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/difok = [-]?[0-9]+/difok = $unique/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ difok=$unique/"
@@ -13672,12 +13672,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                 if ($PsBoundParameters.ContainsKey("class")) {
                     # minclass = Minimum number of character types that must be used (e.g., uppercase, lowercase, digits, other) (Default = 4)
-                    $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "/etc/security/pwquality.conf"
                     } else {
                         "/etc/pam.d/system-password"
                     }
-                    $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                    $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         "s/minclass = [-]?[0-9]+/minclass = $class/g"
                     } else {
                         ";s/minclass=[-]?[0-9]+/minclass=$class/"
@@ -13687,7 +13687,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     if ($checkKeys.ScriptOutput -match "# minclass =" -or $checkKeys.ScriptOutput -match "minclass=") {
                         $scriptCommand = "sed -E -i.bak '$uncommentRegex;$classRegex' $configFile"
                     } else {
-                        $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             ";s/minclass = [-]?[0-9]+/minclass = $class/g"
                         } else {
                             ";/pam_cracklib.so/ s/$/ minclass=$class/"
@@ -13728,7 +13728,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                 if ($PsBoundParameters.ContainsKey("retry")) {
                     # retry = Maximum number of retries of password (Default = 3)
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         if ($checkKeys.ScriptOutput -match "# retry =") {
                             $scriptCommand = $null
                             $retryCommand = $null
@@ -13736,7 +13736,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             $retryCommand += "/retry/s/ *# *//g"
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -13749,7 +13749,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             $retryCommand += "s/retry = [-]?[0-9]+/retry = $retry/g"
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -13765,7 +13765,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             $retryCommand += ";s/retry = [-]?[0-9]+/retry = $retry/g"
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -13794,7 +13794,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                         $scriptCommand += $retryCommand
 
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             $scriptCommand += "' /etc/security/pwquality.conf"
                         } else {
                             $scriptCommand += "' /etc/pam.d/system-password"
@@ -13815,7 +13815,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     $vropsusername = (Get-vRSLCMLockerPassword -vmid $vropspassword.passwordvmid).userName
                     $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser $vropsusername -GuestPassword $vropspassword.password
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         $scriptCheck = " cat /etc/security/pwquality.conf"
                     } else {
                         $scriptCheck = " cat /etc/pam.d/system-password"
@@ -13825,12 +13825,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("minLength")) {
                         # minlen = Minimum password length (Default = 8)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                         } else {
                             ";s/minlen=[-]?[0-9]+/minlen=$minLength/"
@@ -13840,7 +13840,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minlen =" -or $checkKeys.ScriptOutput -match "minlen=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$minLengthRegex' $configFile"
                         } else {
-                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minlen=$minLength/"
@@ -13852,12 +13852,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("uppercase")) {
                         # ucredit = Maximum number of uppercase characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                         } else {
                             ";s/ucredit=[-]?[0-9]+/ucredit=$uppercase/"
@@ -13867,7 +13867,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ucredit =" -or $checkKeys.ScriptOutput -match "ucredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uppercaseRegex' $configFile"
                         } else {
-                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ucredit=$uppercase/"
@@ -13879,12 +13879,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("lowercase")) {
                         # lcredit = Maximum number of lowercase characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                         } else {
                             ";s/lcredit=[-]?[0-9]+/lcredit=$lowercase/"
@@ -13894,7 +13894,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# lcredit =" -or $checkKeys.ScriptOutput -match "lcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$lowercaseRegex' $configFile"
                         } else {
-                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ lcredit=$lowercase/"
@@ -13906,12 +13906,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("numerical")) {
                         # dcredit = Maximum number of digits that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                         } else {
                             ";s/dcredit=[-]?[0-9]+/dcredit=$numerical/"
@@ -13921,7 +13921,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# dcredit =" -or $checkKeys.ScriptOutput -match "dcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$numericalRegex' $configFile"
                         } else {
-                            $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ dcredit=$numerical/"
@@ -13933,12 +13933,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("special")) {
                         # ocredit = Maximum number of other characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                         } else {
                             ";s/ocredit=[-]?[0-9]+/ocredit=$special/"
@@ -13948,7 +13948,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ocredit =" -or $checkKeys.ScriptOutput -match "ocredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$specialRegex' $configFile"
                         } else {
-                            $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ocredit=$special/"
@@ -13960,12 +13960,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("unique")) {
                         # difok = Minimum number of characters that must be different from the old password (Default = 4)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/difok = [-]?[0-9]+/difok = $unique/g"
                         } else {
                             ";s/difok=[-]?[0-9]+/difok=$unique/"
@@ -13975,7 +13975,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# difok =" -or $checkKeys.ScriptOutput -match "difok=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uniqueRegex' $configFile"
                         } else {
-                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/difok = [-]?[0-9]+/difok = $unique/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ difok=$unique/"
@@ -13987,12 +13987,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("class")) {
                         # minclass = Minimum number of character types that must be used (e.g., uppercase, lowercase, digits, other) (Default = 4)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minclass = [-]?[0-9]+/minclass = $class/g"
                         } else {
                             ";s/minclass=[-]?[0-9]+/minclass=$class/"
@@ -14002,7 +14002,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minclass =" -or $checkKeys.ScriptOutput -match "minclass=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$classRegex' $configFile"
                         } else {
-                            $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minclass = [-]?[0-9]+/minclass = $class/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minclass=$class/"
@@ -14014,12 +14014,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("sequence")) {
                         # maxsequence = Maximum number of times a single character may be repeated (Default = 0)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                         } else {
                             ";s/maxsequence=[-]?[0-9]+/maxsequence=$sequence/"
@@ -14029,7 +14029,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# maxrepeat =" -or $checkKeys.ScriptOutput -match "maxsequence=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$sequenceRegex' $configFile"
                         } else {
-                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ maxsequence=$sequence/"
@@ -14041,7 +14041,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("history")) {
                         # remember = Maximum number of passwords the system remembers (Default = 5)
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# remember =") {
                                 $scriptCommand = $null
                                 $historyCommand = $null
@@ -14049,7 +14049,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += "/^# remember/s/ *# *//g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14065,7 +14065,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += ";s/(remember = [-]?[0-9]+)|(remember =)/remember = $history/g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14092,7 +14092,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             }
                             $scriptCommand += $historyCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwhistory.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -14106,7 +14106,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("retry")) {
                         # retry = Maximum number of retries of password (Default = 3)
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# retry =") {
                                 $scriptCommand = $null
                                 $retryCommand = $null
@@ -14114,7 +14114,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "/retry/s/ *# *//g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14128,7 +14128,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14144,7 +14144,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += ";s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14171,7 +14171,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             }
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -14193,7 +14193,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     $vrlipassword = (Get-vRSLCMProductPassword -productId vrli -nodeFqdn $node -vrslcmRootPass $vcfVrslcmDetails.rootPassword)
                     $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser root -GuestPassword $vrlipassword.password
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         $scriptCheck = " cat /etc/security/pwquality.conf"
                     } else {
                         $scriptCheck = " cat /etc/pam.d/system-password"
@@ -14203,12 +14203,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("minLength")) {
                         # minlen = Minimum password length (Default = 8)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                         } else {
                             ";s/minlen=[-]?[0-9]+/minlen=$minLength/"
@@ -14218,7 +14218,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minlen =" -or $checkKeys.ScriptOutput -match "minlen=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$minLengthRegex' $configFile"
                         } else {
-                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minlen=$minLength/"
@@ -14230,12 +14230,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("uppercase")) {
                         # ucredit = Maximum number of uppercase characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                         } else {
                             ";s/ucredit=[-]?[0-9]+/ucredit=$uppercase/"
@@ -14245,7 +14245,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ucredit =" -or $checkKeys.ScriptOutput -match "ucredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uppercaseRegex' $configFile"
                         } else {
-                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ucredit=$uppercase/"
@@ -14257,12 +14257,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("lowercase")) {
                         # lcredit = Maximum number of lowercase characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                         } else {
                             ";s/lcredit=[-]?[0-9]+/lcredit=$lowercase/"
@@ -14272,7 +14272,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# lcredit =" -or $checkKeys.ScriptOutput -match "lcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$lowercaseRegex' $configFile"
                         } else {
-                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ lcredit=$lowercase/"
@@ -14284,12 +14284,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("numerical")) {
                         # dcredit = Maximum number of digits that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                         } else {
                             ";s/dcredit=[-]?[0-9]+/dcredit=$numerical/"
@@ -14299,7 +14299,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# dcredit =" -or $checkKeys.ScriptOutput -match "dcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$numericalRegex' $configFile"
                         } else {
-                            $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ dcredit=$numerical/"
@@ -14311,12 +14311,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("special")) {
                         # ocredit = Maximum number of other characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                         } else {
                             ";s/ocredit=[-]?[0-9]+/ocredit=$special/"
@@ -14326,7 +14326,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ocredit =" -or $checkKeys.ScriptOutput -match "ocredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$specialRegex' $configFile"
                         } else {
-                            $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ocredit=$special/"
@@ -14338,12 +14338,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("unique")) {
                         # difok = Minimum number of characters that must be different from the old password (Default = 4)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/difok = [-]?[0-9]+/difok = $unique/g"
                         } else {
                             ";s/difok=[-]?[0-9]+/difok=$unique/"
@@ -14353,7 +14353,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# difok =" -or $checkKeys.ScriptOutput -match "difok=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uniqueRegex' $configFile"
                         } else {
-                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/difok = [-]?[0-9]+/difok = $unique/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ difok=$unique/"
@@ -14365,12 +14365,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("class")) {
                         # minclass = Minimum number of character types that must be used (e.g., uppercase, lowercase, digits, other) (Default = 4)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minclass = [-]?[0-9]+/minclass = $class/g"
                         } else {
                             ";s/minclass=[-]?[0-9]+/minclass=$class/"
@@ -14380,7 +14380,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minclass =" -or $checkKeys.ScriptOutput -match "minclass=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$classRegex' $configFile"
                         } else {
-                            $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minclass = [-]?[0-9]+/minclass = $class/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minclass=$class/"
@@ -14392,12 +14392,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("sequence")) {
                         # maxsequence = Maximum number of times a single character may be repeated (Default = 0)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                         } else {
                             ";s/maxsequence=[-]?[0-9]+/maxsequence=$sequence/"
@@ -14407,7 +14407,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# maxrepeat =" -or $checkKeys.ScriptOutput -match "maxsequence=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$sequenceRegex' $configFile"
                         } else {
-                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ maxsequence=$sequence/"
@@ -14419,7 +14419,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("history")) {
                         # remember = Maximum number of passwords the system remembers (Default = 5)
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# remember =") {
                                 $scriptCommand = $null
                                 $historyCommand = $null
@@ -14427,7 +14427,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += "/^# remember/s/ *# *//g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14444,7 +14444,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14483,7 +14483,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("retry")) {
                         # retry = Maximum number of retries of password (Default = 3)
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# retry =") {
                                 $scriptCommand = $null
                                 $retryCommand = $null
@@ -14491,7 +14491,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "/retry/s/ *# *//g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14505,7 +14505,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14521,7 +14521,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += ";s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14548,7 +14548,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             }
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"
@@ -14669,7 +14669,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                     $vrausername = (Get-vRSLCMLockerPassword -vmid $vrapassword.passwordvmid).userName
                     $photonRelease = Invoke-VMscript -VM $node.split('.')[0] -ScriptText $photonScript -GuestUser $vrausername -GuestPassword $vrapassword.password
 
-                    if ($photonRelease.ScriptOutput -match "4.0") {
+                    if ($photonRelease.ScriptOutput -match "[4-5].0") {
                         $scriptCheck = " cat /etc/security/pwquality.conf"
                     } else {
                         $scriptCheck = " cat /etc/pam.d/system-password"
@@ -14679,12 +14679,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("minLength")) {
                         # minlen = Minimum password length (Default = 8)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                         } else {
                             ";s/minlen=[-]?[0-9]+/minlen=$minLength/"
@@ -14694,7 +14694,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minlen =" -or $checkKeys.ScriptOutput -match "minlen=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$minLengthRegex' $configFile"
                         } else {
-                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $minLengthRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minlen = [-]?[0-9]+/minlen = $minLength/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minlen=$minLength/"
@@ -14706,12 +14706,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("uppercase")) {
                         # ucredit = Maximum number of uppercase characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                         } else {
                             ";s/ucredit=[-]?[0-9]+/ucredit=$uppercase/"
@@ -14721,7 +14721,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ucredit =" -or $checkKeys.ScriptOutput -match "ucredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uppercaseRegex' $configFile"
                         } else {
-                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uppercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ucredit = [-]?[0-9]+/ucredit = $uppercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ucredit=$uppercase/"
@@ -14733,12 +14733,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("lowercase")) {
                         # lcredit = Maximum number of lowercase characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                         } else {
                             ";s/lcredit=[-]?[0-9]+/lcredit=$lowercase/"
@@ -14748,7 +14748,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# lcredit =" -or $checkKeys.ScriptOutput -match "lcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$lowercaseRegex' $configFile"
                         } else {
-                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $lowercaseRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/lcredit = [-]?[0-9]+/lcredit = $lowercase/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ lcredit=$lowercase/"
@@ -14760,12 +14760,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("numerical")) {
                         # dcredit = Maximum number of digits that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                         } else {
                             ";s/dcredit=[-]?[0-9]+/dcredit=$numerical/"
@@ -14775,7 +14775,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# dcredit =" -or $checkKeys.ScriptOutput -match "dcredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$numericalRegex' $configFile"
                         } else {
-                            $numericalRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $numericalRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/dcredit = [-]?[0-9]+/dcredit = $numerical/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ dcredit=$numerical/"
@@ -14787,12 +14787,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("special")) {
                         # ocredit = Maximum number of other characters that will generate a credit (Default = -1)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                         } else {
                             ";s/ocredit=[-]?[0-9]+/ocredit=$special/"
@@ -14802,7 +14802,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# ocredit =" -or $checkKeys.ScriptOutput -match "ocredit=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$specialRegex' $configFile"
                         } else {
-                            $specialRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $specialRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/ocredit = [-]?[0-9]+/ocredit = $special/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ ocredit=$special/"
@@ -14814,12 +14814,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("unique")) {
                         # difok = Minimum number of characters that must be different from the old password (Default = 4)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/difok = [-]?[0-9]+/difok = $unique/g"
                         } else {
                             ";s/difok=[-]?[0-9]+/difok=$unique/"
@@ -14829,7 +14829,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# difok =" -or $checkKeys.ScriptOutput -match "difok=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$uniqueRegex' $configFile"
                         } else {
-                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $uniqueRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/difok = [-]?[0-9]+/difok = $unique/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ difok=$unique/"
@@ -14841,12 +14841,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("class")) {
                         # minclass = Minimum number of character types that must be used (e.g., uppercase, lowercase, digits, other) (Default = 4)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/minclass = [-]?[0-9]+/minclass = $class/g"
                         } else {
                             ";s/minclass=[-]?[0-9]+/minclass=$class/"
@@ -14856,7 +14856,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# minclass =" -or $checkKeys.ScriptOutput -match "minclass=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$classRegex' $configFile"
                         } else {
-                            $classRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $classRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/minclass = [-]?[0-9]+/minclass = $class/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ minclass=$class/"
@@ -14868,12 +14868,12 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("sequence")) {
                         # maxsequence = Maximum number of times a single character may be repeated (Default = 0)
-                        $configFile = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $configFile = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "/etc/security/pwquality.conf"
                         } else {
                             "/etc/pam.d/system-password"
                         }
-                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                        $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             "s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                         } else {
                             ";s/maxsequence=[-]?[0-9]+/maxsequence=$sequence/"
@@ -14883,7 +14883,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                         if ($checkKeys.ScriptOutput -match "# maxrepeat =" -or $checkKeys.ScriptOutput -match "maxsequence=") {
                             $scriptCommand = "sed -E -i.bak '$uncommentRegex;$sequenceRegex' $configFile"
                         } else {
-                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "4.0") {
+                            $sequenceRegex = if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 ";s/maxrepeat = [-]?[0-9]+/maxrepeat = $sequence/g"
                             } else {
                                 ";/pam_cracklib.so/ s/$/ maxsequence=$sequence/"
@@ -14895,7 +14895,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("history")) {
                         # remember = Maximum number of passwords the system remembers (Default = 5)
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# remember =") {
                                 $scriptCommand = $null
                                 $historyCommand = $null
@@ -14903,7 +14903,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += "/^# remember/s/ *# *//g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14916,7 +14916,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += "s/(remember = [-]?[0-9]+)|(remember = )/remember = $history/g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14933,7 +14933,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $historyCommand += ";s/(remember = [-]?[0-9]+)|(remember = )/remember = $history/g"
                                 $scriptCommand += $historyCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwhistory.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14969,7 +14969,7 @@ Function Update-AriaLocalUserPasswordComplexity {
 
                     if ($PsBoundParameters.ContainsKey("retry")) {
                         # retry = Maximum number of retries of password (Default = 3)
-                        if ($photonRelease.ScriptOutput -match "4.0") {
+                        if ($photonRelease.ScriptOutput -match "[4-5].0") {
                             if ($checkKeys.ScriptOutput -match "# retry =") {
                                 $scriptCommand = $null
                                 $retryCommand = $null
@@ -14977,7 +14977,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "/retry/s/ *# *//g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -14991,7 +14991,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += "s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -15007,7 +15007,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                                 $retryCommand += ";s/retry = [-]?[0-9]+/retry = $retry/g"
                                 $scriptCommand += $retryCommand
 
-                                if ($photonRelease.ScriptOutput -match "4.0") {
+                                if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                     $scriptCommand += "' /etc/security/pwquality.conf"
                                 } else {
                                     $scriptCommand += "' /etc/pam.d/system-password"
@@ -15034,7 +15034,7 @@ Function Update-AriaLocalUserPasswordComplexity {
                             }
                             $scriptCommand += $retryCommand
 
-                            if ($photonRelease.ScriptOutput -match "4.0") {
+                            if ($photonRelease.ScriptOutput -match "[4-5].0") {
                                 $scriptCommand += "' /etc/security/pwquality.conf"
                             } else {
                                 $scriptCommand += "' /etc/pam.d/system-password"

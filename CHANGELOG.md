@@ -1,5 +1,13 @@
 # Release History
 
+## v1.8.2
+
+> Release Date: Unreleased
+
+Enhancement:
+
+- Enhanced to support Photon OS 4.0 and 5.0 based appliances. [GH-202](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/202)
+
 ## v1.8.1
 
 > Release Date: 2024-05-28
