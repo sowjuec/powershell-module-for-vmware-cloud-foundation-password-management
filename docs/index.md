@@ -62,6 +62,7 @@ The following table lists the supported platforms for this module.
 
 Platform                                                     | Support                             | Reference
 -------------------------------------------------------------|-------------------------------------|--------------------------------------------------------------------------------------
+:fontawesome-solid-cloud: &nbsp; VMware Cloud Foundation 5.2 | :fontawesome-solid-check:{ .green } | :fontawesome-solid-book: &nbsp; [Documentation][docs-vmware-cloud-foundation-ppm-5-2]
 :fontawesome-solid-cloud: &nbsp; VMware Cloud Foundation 5.1 | :fontawesome-solid-check:{ .green } | :fontawesome-solid-book: &nbsp; [Documentation][docs-vmware-cloud-foundation-ppm-5-1]
 :fontawesome-solid-cloud: &nbsp; VMware Cloud Foundation 5.0 | :fontawesome-solid-check:{ .green } | :fontawesome-solid-book: &nbsp; [Documentation][docs-vmware-cloud-foundation-ppm-5-0]
 :fontawesome-solid-cloud: &nbsp; VMware Cloud Foundation 4.5 | :fontawesome-solid-check:{ .green } | :fontawesome-solid-book: &nbsp; [Documentation][docs-vmware-cloud-foundation-ppm-4-5]
@@ -98,6 +99,7 @@ PowerShell Module                                    | Version   | Publisher | R
 [PowerValidatedSolutions][psgallery-module-pvs]      | >= 2.10.0 | Broadcom  | :fontawesome-solid-book: &nbsp; [Documentation][docs-module-pvs]
 
 [docs-vmware-cloud-foundation]: https://docs.vmware.com/en/VMware-Cloud-Foundation/index.html
+[docs-vmware-cloud-foundation-ppm-5-2]: https://docs.vmware.com/en/VMware-Cloud-Foundation/5.2/vcf-operations/GUID-18A95158-30F5-460F-AF80-33F25B6533D0.html
 [docs-vmware-cloud-foundation-ppm-5-1]: https://docs.vmware.com/en/VMware-Cloud-Foundation/5.1/vcf-operations/GUID-18A95158-30F5-460F-AF80-33F25B6533D0.html
 [docs-vmware-cloud-foundation-ppm-5-0]: https://docs.vmware.com/en/VMware-Cloud-Foundation/5.0/vcf-operations/GUID-18A95158-30F5-460F-AF80-33F25B6533D0.html
 [docs-vmware-cloud-foundation-ppm-4-5]: https://docs.vmware.com/en/VMware-Cloud-Foundation/4.5/vcf-operations/GUID-18A95158-30F5-460F-AF80-33F25B6533D0.html

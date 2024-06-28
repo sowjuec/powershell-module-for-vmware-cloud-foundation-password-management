@@ -7,6 +7,7 @@
 Enhancement:
 
 - Enhanced to support Photon OS 4.0 and 5.0 based appliances. [GH-202](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/202)
+- Enhanced `Get-PasswordPolicyDefault` to support VMware Cloud Foundation 5.2. [GH-204](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/204)
 
 ## v1.8.1
 
