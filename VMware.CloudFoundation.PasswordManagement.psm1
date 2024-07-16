@@ -1345,7 +1345,13 @@ Function Get-PasswordPolicyDefault {
     $sddcManagerPasswordExpiration | Add-Member -notepropertyname 'minDays' -notepropertyvalue "0"
     $sddcManagerPasswordExpiration | Add-Member -notepropertyname 'warningDays' -notepropertyvalue "7"
     $sddcManagerPasswordComplexity = New-Object -TypeName psobject
-    $sddcManagerPasswordComplexity | Add-Member -notepropertyname 'minLength' -notepropertyvalue "8"
+    if ($version -ge "5.2") {
+        $sddcManagerPasswordComplexity | Add-Member -notepropertyname 'minLength' -notepropertyvalue "15"
+    } elseif ($version -ge "5.1") {
+        $sddcManagerPasswordComplexity | Add-Member -notepropertyname 'minLength' -notepropertyvalue "12"
+    } else {
+        $sddcManagerPasswordComplexity | Add-Member -notepropertyname 'minLength' -notepropertyvalue "8"
+    }
     $sddcManagerPasswordComplexity | Add-Member -notepropertyname 'minLowercase' -notepropertyvalue "-1"
     $sddcManagerPasswordComplexity | Add-Member -notepropertyname 'minUppercase' -notepropertyvalue "-1"
     $sddcManagerPasswordComplexity | Add-Member -notepropertyname 'minNumerical' -notepropertyvalue "-1"
