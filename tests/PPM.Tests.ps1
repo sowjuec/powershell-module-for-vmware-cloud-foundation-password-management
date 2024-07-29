@@ -51,6 +51,7 @@ Describe 'Test Suite' {
                 [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $server,
                 [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()] $user,
                 [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()] $type,
+                [bool] $aria = $false,
                 [bool] $useLiveData = $false
             )
 
@@ -59,15 +60,20 @@ Describe 'Test Suite' {
                 $index = 0
                 # Loop through each item in the output.
                 foreach ($item in $output) {
+                    if ($aria) {
+                        $userinOutput = $item.'Local User'
+                    } else {
+                        $userinOutput = $item.'User'
+                    }
                     if ($user -and $type) {
-                        if ($item.'System' -match $server -and $item.'User' -match $user -and $item.'Type' -match $type) {
+                        if ($item.'System' -match $server -and $userinOutput -match $user -and $item.'Type' -match $type) {
                             $flag = $true
                             break
                         }
                     } else {
                         if ($user) {
                             # If the system matches the server and user, break the loop.
-                            if ($item.'System' -match $server -and $item.'User' -match $user) {
+                            if ($item.'System' -match $server -and $userinOutput -match $user) {
                                 $flag = $true
                                 break
                             }
@@ -84,6 +90,10 @@ Describe 'Test Suite' {
                             }
                         }
                     }
+                }
+                if ($flag) {
+                    return $index
+                } else {
                     # Increment the index by 1.
                     $index = $index + 1
                 }
@@ -136,7 +146,7 @@ Describe 'Test Suite' {
 
                     # Get the index of the first ESXi host in the output.
                     $index = Get-Index -output $currentExpirationSettings -server $esxiServer -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the ESXI host $esxiServer in the output is $index"
+                    Write-LogToFile -message "The index of the ESXi host $esxiServer in the output is $index."
 
                     # Decrement the Max Days by 1.
                     $maxDays = [int]$currentExpirationSettings[$index].'Max Days' - 1
@@ -196,7 +206,7 @@ Describe 'Test Suite' {
         }
 
         # SSO Password Expiration
-        Describe 'SSO Password Expiration' -Tag "SSOPasswordExpiration" {
+        Describe 'SSO Password Expiration' -Tag "SsoPasswordExpiration" {
             # Expect a success.
             It 'Expect Success' -Tag "Positive" {
                 Try {
@@ -336,6 +346,7 @@ Describe 'Test Suite' {
                 }
             }
         }
+
         # vCenter root Password Expiration
         Describe 'vCenter root Password Expiration' -Tag "vCenterRootPasswordExpiration" {
             BeforeEach {
@@ -414,8 +425,7 @@ Describe 'Test Suite' {
             }
         }
 
-        Describe 'local user password expiration for SDDC Manager' -Tag "LocalUserPasswordExpiration" {
-
+        Describe 'SDDC Manager Local User Password Expiration' -Tag "SddcManagerLocalUserPasswordExpiration" {
             BeforeEach {
                 # Request the current local user password expiration settings for SDDC Manager
                 $currentExpirationSettings = Request-LocalUserPasswordExpiration -server $server -user $user -pass $pass -domain $domain -vmName $vmName -guestUser $rootUser -guestPassword $rootPass -localUser $localUser
@@ -423,22 +433,21 @@ Describe 'Test Suite' {
                 $minDays = [int]$currentExpirationSettings.'Min Days' + 1
                 $warnDays = [int]$currentExpirationSettings.'Warning Days' + 1
                 $maxDays = [int]$currentExpirationSettings.'Max Days' + 1
-
             }
 
             # Expect a success.
             It 'Expect Success' -Tag "Positive" {
                 Try {
-                    Write-LogToFile -message "Start of Local User Password Expiration Positive Testcase"
+                    Write-LogToFile -message "Start of SDDC Manager Local User Password Expiration Positive Testcase"
                     Write-LogToFile -message "Incremented Max Days: $maxDays"
                     Write-LogToFile -message "Incremented Min Days: $minDays"
                     Write-LogToFile -message "Incremented Warn Days: $warnDays"
 
-                    # Update the vCenter Server root password expiration settings.
-                    $updateResult = update-LocalUserPasswordExpiration -server $server -user $user -pass $pass -domain $domain -minDays $minDays -warnDays $warnDays -maxDays $maxDays -vmName $vmName -guestUser $rootUser -guestPassword $rootPass -localUser $localUser
+                    # Update the SDDC Manager local user password expiration settings.
+                    $updateResult = Update-LocalUserPasswordExpiration -server $server -user $user -pass $pass -domain $domain -minDays $minDays -warnDays $warnDays -maxDays $maxDays -vmName $vmName -guestUser $rootUser -guestPassword $rootPass -localUser $localUser
                     Write-LogToFile -message "Update Result: $updateResult"
 
-                    # Request the updated vCenter Server root password expiration settings.
+                    # Request the updated SDDC Manager local user password expiration settings.
                     $updatedExpirationSettings = Request-LocalUserPasswordExpiration -server $server -user $user -pass $pass -domain $domain -vmName $vmName -guestUser $rootUser -guestPassword $rootPass -localUser $localUser
 
                     # Get the updated Max Days.
@@ -459,19 +468,19 @@ Describe 'Test Suite' {
                     Write-LogToFile -Type ERROR -message "An error occurred: $_"
                     $false | Should -Be $true
                 } Finally {
-                    Write-LogToFile -message "End of Local User Password Expiration Positive Testcase"
+                    Write-LogToFile -message "End of SDDC Manager Local User Password Expiration Positive Testcase"
                 }
             }
 
             # Expect a failure.
             It 'Expect Failure' -Tag "Negative" {
                 Try {
-                    Write-LogToFile -message "Start of Local User Password Expiration Negative Testcase"
+                    Write-LogToFile -message "Start of SDDC Manager Local User Password Expiration Negative Testcase"
                     # Set MaxDays to an invalid value
                     $invalidMaxDays = 10000000000000000000
 
-                    # Attempt to update the vCenter Server root password expiration settings.
-                    $updateResult = update-LocalUserPasswordExpiration -server $server -user $user -pass $pass -domain $domain -minDays $minDays -warnDays $warnDays -maxDays $invalidMaxDays -vmName $vmName -guestUser $rootUser -guestPassword $rootPass -localUser $localUser
+                    # Attempt to update the SDDC Manager local user password expiration settings.
+                    $updateResult = Update-LocalUserPasswordExpiration -server $server -user $user -pass $pass -domain $domain -minDays $minDays -warnDays $warnDays -maxDays $invalidMaxDays -vmName $vmName -guestUser $rootUser -guestPassword $rootPass -localUser $localUser
 
                     # Output the update result.
                     Write-LogToFile -message "Update Result: $updateResult"
@@ -485,19 +494,20 @@ Describe 'Test Suite' {
                     # If an error was thrown, fail the test.
                     $false | Should -Be $true
                 } Finally {
-                    Write-LogToFile -message "End of Local User Password Expiration Negative Testcase"
+                    Write-LogToFile -message "End of SDDC Manager Local User Password Expiration Negative Testcase"
                 }
             }
         }
 
-        Describe 'NSX Edge Password Expiration' -Tag "NSXEdgePasswordExpiration" {
+        # NSX Edge Password Expiration
+        Describe 'NSX Edge Password Expiration' -Tag "NsxEdgePasswordExpiration" {
             BeforeEach {
                 # Request the current NSX Edge password expiration settings
                 $currentExpirationSettings = Request-NsxtEdgePasswordExpiration -server $server -user $user -pass $pass -domain $domain
 
                 # Get the index of the NSX Edge.
                 $index = Get-Index -output $currentExpirationSettings -server $nsxEdgeNode -user $rootUser -useLiveData $useLiveData
-                Write-LogToFile -message "The index of the NSX Edge node $nsxEdgeNode in the output is $index"
+                Write-LogToFile -message "The index of the NSX Edge node $nsxEdgeNode in the output is $index."
             }
 
             # Expect a success.
@@ -563,14 +573,15 @@ Describe 'Test Suite' {
             }
         }
 
-        Describe 'NSX Manager Password Expiration' -Tag "NSXManagerPasswordExpiration" {
+        # NSX Manager Password Expiration
+        Describe 'NSX Manager Password Expiration' -Tag "NsxManagerPasswordExpiration" {
             BeforeEach {
                 # Request the current NSX Manager password expiration settings
                 $currentExpirationSettings = Request-NsxtManagerPasswordExpiration -server $server -user $user -pass $pass -domain $domain
 
                 # Get the index of the NSX Manager.
                 $index = Get-Index -output $currentExpirationSettings -server $nsxManager -user $rootUser -useLiveData $useLiveData
-                Write-LogToFile -message "The index of the NSX Manager node $nsxManagerNode in the output is $index"
+                Write-LogToFile -message "The index of the NSX Manager node $nsxManagerNode in the output is $index."
 
                 # Decrement the Max Days by 1.
                 $maxDays = [int]$currentExpirationSettings[$index].'Max Days' - 1
@@ -638,19 +649,334 @@ Describe 'Test Suite' {
                 }
             }
         }
+
+        # VMware Aria Suite Lifecycle Password Expiration
+        Describe 'VMware Aria Suite Lifecycle Password Expiration' -Tag "AriaSuiteLifecyclePasswordExpiration" {
+            BeforeEach {
+                # Request the current VMware Aria Suite Lifecycle password expiration settings
+                $currentExpirationSettings = Request-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrslcm
+                Write-LogToFile -message $currentExpirationSettings
+
+                $ariaSuiteLifecycleVMname = $ariaSuiteLifecycle.Split('.')[0]
+                Write-LogToFile -message $ariaSuiteLifecycleVMname
+
+                $index = Get-Index -output $currentExpirationSettings -server $ariaSuiteLifecycleVMname -user $rootUser -useLiveData $useLiveData -aria $true
+                Write-LogToFile -message "The index of the VMware Aria Suite Lifecycle node $ariaSuiteLifecycleVMname in the output is $index."
+
+                # Decrement the Max Days by 1.
+                $maxDays = [int]$currentExpirationSettings[$index].'Maximum (days)' - 1
+                $minDays = [int]$currentExpirationSettings[$index].'Minimum (days)'
+                $warnDays = [int]$currentExpirationSettings[$index].'Warning (days)'
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Suite Lifecycle Password Expiration Positive Testcase"
+                    Write-LogToFile -message "Decremented Max Days: $maxDays"
+
+                    # Update the VMware Aria Suite Lifecycle password expiration settings.
+                    Update-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrslcm -localuser $rootUser -maxDays $maxDays -mindays $minDays -warndays $warnDays
+
+                    # Request the updated VMware Aria Suite Lifecycle password expiration settings.
+                    $updatedExpirationSettings = Request-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrslcm
+                    Write-LogToFile -message $updatedExpirationSettings
+
+                    # Get the index of the VMware Aria Suite Lifecycle.
+                    $index = Get-Index -output $updatedExpirationSettings -server $ariaSuiteLifecycleVMname -user $rootUser -useLiveData $useLiveData -aria $true
+
+                    # Get the updated Max Days.
+                    $outMaxDays = $updatedExpirationSettings[$index].'Maximum (days)'.trim()
+                    Write-LogToFile -message $outMaxDays
+
+                    # Output the updated Max Days.
+                    Write-LogToFile -message "Updated Max Days: $outMaxDays"
+
+                    # Assert that the updated Max Days is equal to the decremented Max Days.
+                    $outMaxDays | Should -Be $maxDays
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Suite Lifecycle Password Expiration Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            # Accepted range of value is <1-9999>
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Suite Lifecycle Password Expiration Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $invalidMaxDays = 10000000000000000
+
+                    # Attempt to update the VMware Aria Suite Lifecycle password expiration settings.
+                    $updateResult = Update-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrslcm -localuser $rootUser -maxDays $maxDays -mindays $minDays -warndays $warnDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $false | Should -Be $true
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Suite Lifecycle Password Expiration Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Operations Password Expiration
+        Describe 'VMware Aria Operations Password Expiration' -Tag "AriaOperationsPasswordExpiration" {
+            BeforeEach {
+                # Request the current VMware Aria Operations password expiration settings.
+                $currentExpirationSettings = Request-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrops
+
+                $ariaOperationsVM = $ariaOperations.Split('.')[0]
+                Write-LogToFile -message $ariaOperationsVM
+
+                $index = Get-Index -output $currentExpirationSettings -server $ariaOperationsVM -user $rootUser -useLiveData $useLiveData -aria $true
+                Write-LogToFile -message "The index of the VMware Aria Operations node $ariaOperationsVM in the output is $index."
+
+                # Decrement the Max Days by 1.
+                $maxDays = [int]$currentExpirationSettings[$index].'Maximum (days)' - 1
+                $minDays = [int]$currentExpirationSettings[$index].'Minimum (days)'
+                $warnDays = [int]$currentExpirationSettings[$index].'Warning (days)'
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations Password Expiration Positive Testcase"
+                    Write-LogToFile -message "Decremented Max Days: $maxDays"
+
+                    # Update the VMware Aria Operations password expiration settings.
+                    Update-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrops -localuser $rootUser -maxDays $maxDays -mindays $minDays -warndays $warnDays
+
+                    # Request the updated VMware Aria Operations password expiration settings.
+                    $updatedExpirationSettings = Request-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrops
+
+                    # Get the index of the VMware Aria Operations.
+                    $index = Get-Index -output $updatedExpirationSettings -server $ariaOperationsVM -user $rootUser -useLiveData $useLiveData -aria $true
+
+                    # Get the updated Max Days.
+                    $outMaxDays = $updatedExpirationSettings[$index].'Maximum (days)'.trim()
+                    Write-LogToFile -message $outMaxDays
+
+                    # Output the updated Max Days.
+                    Write-LogToFile -message "Updated Max Days: $outMaxDays"
+
+                    # Assert that the updated Max Days is equal to the decremented Max Days.
+                    $outMaxDays | Should -Be $maxDays
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations Password Expiration Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            # Accepted range of value is <1-9999>
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations Password Expiration Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $invalidMaxDays = 10000000000000000
+
+                    # Attempt to update the VMware Aria Operations password expiration settings.
+                    $updateResult = Update-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrops -localuser $rootUser -maxDays $maxDays -mindays $minDays -warndays $warnDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $false | Should -Be $true
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations Password Expiration Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Operations for Logs Password Expiration
+        Describe 'VMware Aria Operations for Logs Password Expiration' -Tag "AriaOperationsLogsPasswordExpiration" {
+            BeforeEach {
+                # Request the current VMware Aria Operations for Logs password expiration settings
+                $currentExpirationSettings = Request-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrli
+
+                $ariaOperationsLogsVM = $ariaOperationsLogs.Split('.')[0]
+                Write-LogToFile -message $ariaOperationsLogsVM
+
+                $index = Get-Index -output $currentExpirationSettings -server $ariaOperationsLogsVM -user $rootUser -useLiveData $useLiveData -aria $true
+                Write-LogToFile -message "The index of the VMware Aria Operations for Logs node $ariaOperationsLogsVM in the output is $index."
+
+                # Decrement the Max Days by 1.
+                $maxDays = [int]$currentExpirationSettings[$index].'Maximum (days)' - 1
+                $minDays = [int]$currentExpirationSettings[$index].'Minimum (days)'
+                $warnDays = [int]$currentExpirationSettings[$index].'Warning (days)'
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations for Logs Password Expiration Positive Testcase"
+                    Write-LogToFile -message "Decremented Max Days: $maxDays"
+
+                    # Update the VMware Aria Operations for Logs password expiration settings.
+                    Update-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrli -localuser $rootUser -maxDays $maxDays -mindays $minDays -warndays $warnDays
+
+                    # Request the updated VMware Aria Operations for Logs password expiration settings.
+                    $updatedExpirationSettings = Request-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrli
+
+                    # Get the index of the VMware Aria Operations for Logs.
+                    $index = Get-Index -output $updatedExpirationSettings -server $ariaOperationsLogsVM -user $rootUser -useLiveData $useLiveData -aria $true
+
+                    # Get the updated Max Days.
+                    $outMaxDays = $updatedExpirationSettings[$index].'Maximum (days)'.trim()
+                    Write-LogToFile -message $outMaxDays
+
+                    # Output the updated Max Days.
+                    Write-LogToFile -message "Updated Max Days: $outMaxDays"
+
+                    # Assert that the updated Max Days is equal to the decremented Max Days.
+                    $outMaxDays | Should -Be $maxDays
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations for Logs Password Expiration Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            # Accepted range of value is <1-9999>
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations for Logs Password Expiration Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $invalidMaxDays = 10000000000000000
+
+                    # Attempt to update the VMware Aria Operations for Logs password expiration settings.
+                    $updateResult = Update-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vrli -localuser $rootUser -maxDays $maxDays -mindays $minDays -warndays $warnDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $false | Should -Be $true
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations for Logs Password Expiration Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Automation Password Expiration
+        Describe 'VMware Aria Automation Password Expiration' -Tag "AriaAutomationPasswordExpiration" {
+            BeforeEach {
+                # Request the current VMware Aria Automation password expiration settings
+                $ariaAutomationVMname = $ariaAutomation.Split('.')[0]
+                Write-LogToFile -message $ariaAutomationVMname
+
+                # Request the updated VMware Aria Automation password expiration settings.
+                $currentExpirationSettings = Request-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vra
+
+                $index = Get-Index -output $currentExpirationSettings -server $ariaAutomationVMname -user $rootUser -useLiveData $useLiveData -aria $true
+                Write-LogToFile -message "The index of the VMware Aria Automation node $ariaAutomationVMname in the output is $index."
+
+                # Decrement the Max Days by 1.
+                $maxDays = [int]$currentExpirationSettings[$index].'Maximum (days)' - 1
+                $minDays = [int]$currentExpirationSettings[$index].'Minimum (days)'
+                $warnDays = [int]$currentExpirationSettings[$index].'Warning (days)'
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Automation Password Expiration Positive Testcase"
+                    Write-LogToFile -message "Decremented Max Days: $maxDays"
+
+                    # Update the VMware Aria Automation password expiration settings.
+                    Update-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vra -localuser $rootUser -maxDays $maxDays -mindays $minDays -warndays $warnDays
+
+                    # Request the updated VMware Aria Automation password expiration settings.
+                    $updatedExpirationSettings = Request-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vra
+
+                    # Get the index of the VMware Aria Automation.
+                    $index = Get-Index -output $updatedExpirationSettings -server $ariaAutomationVMname -user $rootUser -useLiveData $useLiveData -aria $true
+
+                    # Get the updated Max Days.
+                    $outMaxDays = $updatedExpirationSettings[$index].'Maximum (days)'.trim()
+                    Write-LogToFile -message $outMaxDays
+
+                    # Output the updated Max Days.
+                    Write-LogToFile -message "Updated Max Days: $outMaxDays"
+
+                    # Assert that the updated Max Days is equal to the decremented Max Days.
+                    $outMaxDays | Should -Be $maxDays
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Automation Password Expiration Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            # Accepted range of value is <1-9999>
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Automation Password Expiration Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $invalidMaxDays = 10000000000000000
+
+                    # Attempt to update the VMware Aria Automation password expiration settings.
+                    $updateResult = Update-AriaLocalUserPasswordExpiration -server $server -user $user -pass $pass -product vra -localuser $rootUser -maxDays $maxDays -mindays $minDays -warndays $warnDays
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # If the function did not throw an error, fail the test.
+                    $false | Should -Be $true
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Automation Password Expiration Negative Testcase"
+                }
+            }
+        }
     }
 
-    #Start of password complexity test suite
+    # Start of password complexity test suite
     Describe 'Password Complexity Test Suite' -Tag "PasswordComplexitySuite" {
         # ESXi Password Complexity
-        Describe 'ESXi Password Complexity' -Tag "ESXiPasswordComplexity" {
+        Describe 'ESXi Password Complexity' -Tag "EsxiPasswordComplexity" {
             BeforeEach {
                 # Request the current ESXi host password complexity settings
                 $currentComplexitySettings = Request-EsxiPasswordComplexity -server $server -user $user -pass $pass -domain $domain -cluster $cluster
 
                 # Get the index of the ESXi host.
                 $index = Get-Index -output $currentComplexitySettings -server $esxiServer -useLiveData $useLiveData
-                Write-LogToFile -message "The index of the ESXI host $esxiServer in the output is $index"
+                Write-LogToFile -message "The index of the ESXi host $esxiServer in the output is $index."
 
                 # Increment the History by 1.
                 $policy = $currentComplexitySettings[$index].'Policy'
@@ -721,7 +1047,7 @@ Describe 'Test Suite' {
         }
 
         # SSO Password Complexity
-        Describe 'SSO Password Complexity' -Tag "SSOPasswordComplexity" {
+        Describe 'SSO Password Complexity' -Tag "SsoPasswordComplexity" {
 
             BeforeEach {
                 # Request the current SSO password Complexity settings
@@ -809,7 +1135,7 @@ Describe 'Test Suite' {
         }
 
         # SDDC Manager Password Complexity
-        Describe 'SDDC Manager Password Complexity' -Tag "SDDCManagerPasswordComplexity" {
+        Describe 'SDDC Manager Password Complexity' -Tag "SddcManagerPasswordComplexity" {
 
             BeforeEach {
                 $currentComplexitySettings = Request-SDDCManagerPasswordComplexity -server $server -user $user -pass $pass -rootPass $rootPass
@@ -985,14 +1311,15 @@ Describe 'Test Suite' {
             }
         }
 
-        Describe 'NSX Edge Password Complexity' -Tag "NSXEdgePasswordComplexity" {
+        # NSX Edge Password Complexity
+        Describe 'NSX Edge Password Complexity' -Tag "NsxEdgePasswordComplexity" {
             BeforeEach {
                 # Request the current NSX Edge password complexity settings
                 $currentComplexitySettings = Request-NsxtEdgePasswordComplexity -server $server -user $user -pass $pass -domain $domain
 
                 # Get the index of the NSX Edge.
                 $index = Get-Index -output $currentComplexitySettings -server $nsxEdgeNode -useLiveData $useLiveData
-                Write-LogToFile -message "The index of the NSX Edge node $nsxEdgeNode in the output is $index"
+                Write-LogToFile -message "The index of the NSX Edge node $nsxEdgeNode in the output is $index."
 
                 # Increment the input settings by 1.
                 $minLength = [int]$currentComplexitySettings[$index].'Min Length' + 1
@@ -1076,14 +1403,15 @@ Describe 'Test Suite' {
             }
         }
 
-        Describe 'NSXT Manager Password Complexity' -Tag "NsxtManagerPasswordComplexity" {
+        # NSX Manager Password Complexity
+        Describe 'NSX Manager Password Complexity' -Tag "NsxManagerPasswordComplexity" {
             BeforeEach {
                 # Request the current NSX manager password complexity settings
                 $currentComplexitySettings = Request-NsxtManagerPasswordComplexity -server $server -user $user -pass $pass -domain $domain
 
                 # Get the index of the NSX Manager.
                 $index = Get-Index -output $currentComplexitySettings -server $nsxManagerNode -useLiveData $useLiveData
-                Write-LogToFile -message "The index of the NSX Manager node $nsxManagerNode in the output is $index"
+                Write-LogToFile -message "The index of the NSX Manager node $nsxManagerNode in the output is $index."
 
                 # Increment the input settings by 1.
                 $minLength = [int]$currentComplexitySettings[$index].'Min Length' + 1
@@ -1181,18 +1509,432 @@ Describe 'Test Suite' {
                 }
             }
         }
+
+        # VMware Aria Suite Lifecycle Password Complexity
+        Describe 'VMware Aria Suite Lifecycle Password Complexity' -Tag "AriaSuiteLifecyclePasswordComplexity" {
+            BeforeEach {
+                $ariaSuiteLifecycleVMname = $ariaSuiteLifecycle.Split('.')[0]
+                Write-LogToFile -message $ariaSuiteLifecycleVMname
+
+                # Request the current VMware Aria Suite Lifecycle Password complexity settings
+                $currentComplexitySettings = Request-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrslcm
+                Write-LogToFile -message $currentComplexitySettings
+
+                # Get the index of the VMware Aria Suite Lifecycle .
+                $index = Get-Index -output $currentComplexitySettings -server $ariaSuiteLifecycleVMname -useLiveData $true -aria $true
+                Write-LogToFile -message "The index of the VMware Aria Suite Lifecycle  node $ariaSuiteLifecycleVMname in the output is $index."
+
+                # Increment the input settings by 1.
+                $minLength = $currentComplexitySettings[$index].'Min Length' + 1
+                $minLower = $currentComplexitySettings[$index].'Min Lowercase'
+                $minUpper = $currentComplexitySettings[$index].'Min Uppercase'
+                $minNum = $currentComplexitySettings[$index].'Min Numerical'
+                $minUnique = $currentComplexitySettings[$index].'Min Unique'
+                $minClass = $currentComplexitySettings[$index].'Min Class'
+                $maxRepeats = $currentComplexitySettings[$index].'Max Retries'
+                $minSpecial = $currentComplexitySettings[$index].'Min Identical Adjacent'
+                $history = $currentComplexitySettings[$index].'History' + 1
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Suite Lifecycle Password Complexity Positive Testcase"
+                    # Output the current data.
+                    Write-LogToFile -message "MinLength: $minLength -- MinLower: $minLower -- MinUpper: $minUpper -- MinNum: $minNum -- MinClass: $minClass -- MaxUnique: $minUnique -- mix Identical adjecant: $minSpecial -- maxRepeats: $maxRepeats -- history: $history"
+
+                    # Update the VMware Aria Suite Lifecycle Password complexity settings.
+                    $updateResult = Update-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrslcm -minLength $minLength -lowercase $minLower -uppercase $minUpper -numerical $minNum -special $minSpecial -class $minClass -unique $minUnique -retry $maxRepeats -history $history
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Request the updated VMware Aria Suite Lifecycle Password complexity settings.
+                    $updatedComplexitySettings = Request-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrslcm
+
+                    # Get the index of the VMware Aria Suite Lifecycle .
+                    $index = Get-Index -output $updatedComplexitySettings -server $ariaSuiteLifecycleVMname -useLiveData $true -aria $true
+
+                    # Get the updated settings data.
+                    $OutMinLength = $updatedComplexitySettings[$index].'Min Length'
+                    $OutMinLower = $updatedComplexitySettings[$index].'Min Lowercase'
+                    $OutMinUpper = $updatedComplexitySettings[$index].'Min Uppercase'
+                    $OutMinNum = $updatedComplexitySettings[$index].'Min Numerical'
+                    $OutMinClass = $updatedComplexitySettings[$index].'Min Class'
+                    $OutMinUnique = $updatedComplexitySettings[$index].'Min Unique'
+                    $OutMaxRepeats = $updatedComplexitySettings[$index].'Max Retries'
+                    $OutMinSpecial = $updatedComplexitySettings[$index].'Min Identical Adjacent'
+                    $OutHistory = $updatedComplexitySettings[$index].'History'
+
+                    # Output the updated data.
+                    Write-LogToFile -message "MinLength: $OutMinLength -- MinLower: $OutMinLower -- MinUpper: $OutMinUpper -- MinNum: $OutMinNum -- MinClass: $OutMinClass -- MaxUnique: $OutMinUnique -- max Identical adjecant: $OutMinSpecial -- OutMaxRepeats: $OutMaxRepeats -- history: $OutHistory"
+
+                    # Assert that the updated data is equal to the incremented data.
+                    $OutMinLength | Should -Be $minLength
+                    $OutMinLower | Should -Be $minLower
+                    $OutMinUpper | Should -Be $minUpper
+                    $OutMinNum | Should -Be $minNum
+                    $OutMinUnique | Should -Be $minUnique
+                    $OutMaxRepeats | Should -Be $maxRepeats
+                    $OutMinClass | Should -Be $minClass
+                    $OutMinSpecial | Should -Be $minSpecial
+                    $OutHistory | Should -Be $history
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Suite Lifecycle Password Complexity Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Suite Lifecycle Password Complexity Negative Testcase"
+                    # Set history to an invalid value
+                    $history = 10000000000000000000000
+
+                    # Attempt to update the VMware Aria Suite Lifecycle Password complexity settings.
+                    $updateResult = Update-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrslcm -minLength $minLength -lowercase $minLower -uppercase $minUpper -numerical $minNum -special $minSpecial -class $minClass -unique $minUnique -retry $maxRepeats -history $history
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Sometimes settings will not be updated yet there is no exception, hence null ouput.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Suite Lifecycle Password Complexity Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Operations Password Complexity
+        Describe 'VMware Aria Operations Password Complexity' -Tag "AriaOperationsPasswordComplexity" {
+            BeforeEach {
+                $ariaOperationsVMname = $ariaOperations.Split('.')[0]
+                Write-LogToFile -message $ariaOperationsVMname
+
+                # Request the current VMware Aria Operations Password complexity settings
+                $currentComplexitySettings = Request-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrops
+
+                # Get the index of the VMware Aria Operations .
+                $index = Get-Index -output $currentComplexitySettings -server $ariaOperationsVMname -useLiveData $true -aria $true
+                Write-LogToFile -message "The index of the VMware Aria Operations node $ariaOperationsVMname in the output is $index."
+
+                # Increment the input settings by 1.
+                $minLength = [int]$currentComplexitySettings[$index].'Min Length' + 1
+                $minLower = [int]$currentComplexitySettings[$index].'Min Lowercase'
+                $minUpper = [int]$currentComplexitySettings[$index].'Min Uppercase'
+                $minNum = [int]$currentComplexitySettings[$index].'Min Numerical'
+                $minUnique = [int]$currentComplexitySettings[$index].'Min Unique'
+                $minClass = [int]$currentComplexitySettings[$index].'Min Class'
+                $minSpecial = [int]$currentComplexitySettings[$index].'Min Special'
+                $maxRepeats = [int]$currentComplexitySettings[$index].'Max Repeat'
+                $maxRetry = [int]$currentComplexitySettings[$index].'Max Retries'
+                $history = [int]$currentComplexitySettings[$index].'History' + 1
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations Password Complexity Positive Testcase"
+                    # Output the current data.
+                    Write-LogToFile -message "MinLength: $minLength -- MinLower: $minLower -- MinUpper: $minUpper -- MinNum: $minNum -- MinClass: $minClass -- MinUnique: $minUnique -- MinSpecial: $minSpecial -- Max Repeat: $maxRepeats -- MaxRetry: $maxRetry -- history: $history"
+
+                    # Update the VMware Aria Operations Password complexity settings.
+                    $updateResult = Update-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrops -minLength $minLength -lowercase $minLower -uppercase $minUpper -numerical $minNum -special $minSpecial -class $minClass -unique $minUnique -retry $maxRetry -history $history -sequence $maxRepeats
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Request the updated VMware Aria Operations Password complexity settings.
+                    $updatedComplexitySettings = Request-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrops
+
+                    # Get the index of the VMware Aria Operations .
+                    $index = Get-Index -output $updatedComplexitySettings -server $ariaOperationsVMname -useLiveData $true -aria $true
+
+                    # Get the updated settings data.
+                    $OutMinLength = [int]$updatedComplexitySettings[$index].'Min Length'
+                    $OutMinLower = [int]$updatedComplexitySettings[$index].'Min Lowercase'
+                    $OutMinUpper = [int]$updatedComplexitySettings[$index].'Min Uppercase'
+                    $OutMinNum = [int]$updatedComplexitySettings[$index].'Min Numerical'
+                    $OutMinClass = [int]$updatedComplexitySettings[$index].'Min Class'
+                    $OutMinUnique = [int]$updatedComplexitySettings[$index].'Min Unique'
+                    $OutMaxRepeats = [int]$updatedComplexitySettings[$index].'Max Repeat'
+                    $OutMaxRetry = [int]$updatedComplexitySettings[$index].'Max Retries'
+                    $OutMinSpecial = [int]$updatedComplexitySettings[$index].'Min Special'
+                    $OutHistory = [int]$updatedComplexitySettings[$index].'History'
+
+                    # Output the updated data.
+                    Write-LogToFile -message "MinLength: $OutMinLength -- MinLower: $OutMinLower -- MinUpper: $OutMinUpper -- MinNum: $OutMinNum -- MinClass: $OutMinClass -- MaxUnique: $OutMinUnique -- Min Special: $OutMinSpecial -- OutMaxRepeats: $OutMaxRepeats -- OutMaxRetry: $OutMaxRetry-- history: $OutHistory"
+
+                    # Assert that the updated data is equal to the incremented data.
+                    $OutMinLength | Should -Be $minLength
+                    $OutMinLower | Should -Be $minLower
+                    $OutMinUpper | Should -Be $minUpper
+                    $OutMinNum | Should -Be $minNum
+                    $OutMinUnique | Should -Be $minUnique
+                    $OutMaxRepeats | Should -Be $maxRepeats
+                    $OutMaxRetry | Should -Be $maxRetry
+                    $OutMinClass | Should -Be $minClass
+                    $OutMinSpecial | Should -Be $minSpecial
+                    $OutHistory | Should -Be $history
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations Password Complexity Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations Password Complexity Negative Testcase"
+                    # Set history to an invalid value
+                    $history = 10000000000000000000000
+
+                    # Attempt to update the VMware Aria Operations Password complexity settings.
+                    $updateResult = Update-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrops -minLength $minLength -lowercase $minLower -uppercase $minUpper -numerical $minNum -special $minSpecial -class $minClass -unique $minUnique -retry $maxRetry -history $history -sequence $maxRepeats
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Sometimes settings will not be updated yet there is no exception, hence null ouput.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations Password Complexity Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Operations for Logs Password Complexity
+        Describe 'VMware Aria Operations for Logs Password Complexity' -Tag "AriaOperationsLogsPasswordComplexity" {
+            BeforeEach {
+                $ariaOperationsLogsVMname = $ariaOperationsLogs.Split('.')[0]
+                Write-LogToFile -message $ariaOperationsLogsVMname
+
+                # Request the current VMware Aria Operations for Logs Password complexity settings
+                $currentComplexitySettings = Request-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrli
+
+                # Get the index of the VMware Aria Operations for Logs .
+                $index = Get-Index -output $currentComplexitySettings -server $ariaOperationsLogsVMname -useLiveData $true -aria $true
+                Write-LogToFile -message "The index of the VMware Aria Operations for Logs node $ariaOperationsLogsVMname in the output is $index."
+
+                # Increment the input settings by 1.
+                $minLength = $currentComplexitySettings[$index].'Min Length' + 1
+                $minLower = $currentComplexitySettings[$index].'Min Lowercase'
+                $minUpper = $currentComplexitySettings[$index].'Min Uppercase'
+                $minNum = $currentComplexitySettings[$index].'Min Numerical'
+                $minUnique = $currentComplexitySettings[$index].'Min Unique'
+                $minClass = $currentComplexitySettings[$index].'Min Class'
+                $minSpecial = $currentComplexitySettings[$index].'Min Special'
+                $maxRepeats = $currentComplexitySettings[$index].'Max Repeat'
+                $maxRetry = $currentComplexitySettings[$index].'Max Retries'
+                $history = $currentComplexitySettings[$index].'History' + 1
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations for Logs Password Complexity Positive Testcase"
+                    # Output the current data.
+                    Write-LogToFile -message "MinLength: $minLength -- MinLower: $minLower -- MinUpper: $minUpper -- MinNum: $minNum -- MinClass: $minClass -- MinUnique: $minUnique -- MinSpecial: $minSpecial -- Max Repeat: $maxRepeats -- MaxRetry: $maxRetry -- history: $history"
+
+                    # Update the VMware Aria Operations for Logs Password complexity settings.
+                    $updateResult = Update-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrli -minLength $minLength -lowercase $minLower -uppercase $minUpper -numerical $minNum -special $minSpecial -class $minClass -unique $minUnique -retry $maxRetry -history $history -sequence $maxRepeats
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Request the updated VMware Aria Operations for Logs Password complexity settings.
+                    $updatedComplexitySettings = Request-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrli
+
+                    # Get the index of the VMware Aria Operations for Logs .
+                    $index = Get-Index -output $updatedComplexitySettings -server $ariaOperationsLogsVMname -useLiveData $true -aria $true
+
+                    # Get the updated settings data.
+                    $OutMinLength = $updatedComplexitySettings[$index].'Min Length'
+                    $OutMinLower = $updatedComplexitySettings[$index].'Min Lowercase'
+                    $OutMinUpper = $updatedComplexitySettings[$index].'Min Uppercase'
+                    $OutMinNum = $updatedComplexitySettings[$index].'Min Numerical'
+                    $OutMinClass = $updatedComplexitySettings[$index].'Min Class'
+                    $OutMinUnique = $updatedComplexitySettings[$index].'Min Unique'
+                    $OutMaxRepeats = $updatedComplexitySettings[$index].'Max Repeat'
+                    $OutMaxRetry = $updatedComplexitySettings[$index].'Max Retries'
+                    $OutMinSpecial = $updatedComplexitySettings[$index].'Min Special'
+                    $OutHistory = $updatedComplexitySettings[$index].'History'
+
+                    # Output the updated data.
+                    Write-LogToFile -message "MinLength: $OutMinLength -- MinLower: $OutMinLower -- MinUpper: $OutMinUpper -- MinNum: $OutMinNum -- MinClass: $OutMinClass -- MaxUnique: $OutMinUnique -- Min Special: $OutMinSpecial -- OutMaxRepeats: $OutMaxRepeats -- OutMaxRetry: $OutMaxRetry-- history: $OutHistory"
+
+                    # Assert that the updated data is equal to the incremented data.
+                    $OutMinLength | Should -Be $minLength
+                    $OutMinLower | Should -Be $minLower
+                    $OutMinUpper | Should -Be $minUpper
+                    $OutMinNum | Should -Be $minNum
+                    $OutMinUnique | Should -Be $minUnique
+                    $OutMaxRepeats | Should -Be $maxRepeats
+                    $OutMaxRetry | Should -Be $maxRetry
+                    $OutMinClass | Should -Be $minClass
+                    $OutMinSpecial | Should -Be $minSpecial
+                    $OutHistory | Should -Be $history
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations for Logs Password Complexity Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations for Logs Password Complexity Negative Testcase"
+                    # Set history to an invalid value
+                    $history = 10000000000000000000000
+
+                    # Attempt to update the VMware Aria Operations for Logs Password complexity settings.
+                    $updateResult = Update-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vrli -minLength $minLength -lowercase $minLower -uppercase $minUpper -numerical $minNum -special $minSpecial -class $minClass -unique $minUnique -retry $maxRetry -history $history -sequence $maxRepeats
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Sometimes settings will not be updated yet there is no exception, hence null ouput.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations for Logs Password Complexity Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Automation Password Complexity
+        Describe 'VMware Aria Automation Password Complexity' -Tag "AriaAutomationPasswordComplexity" {
+            BeforeEach {
+                $ariaAutomationVMname = $ariaAutomation.Split('.')[0]
+                Write-LogToFile -message $ariaAutomationVMname
+
+                # Request the current VMware Aria Automation Password complexity settings
+                $currentComplexitySettings = Request-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vra
+
+                # Get the index of the VMware Aria Automation .
+                $index = Get-Index -output $currentComplexitySettings -server $ariaAutomationVMname -useLiveData $true -aria $true
+                Write-LogToFile -message "The index of the VMware Aria Automation node $ariaAutomationVMname in the output is $index."
+
+                # Increment the input settings by 1.
+                $minLength = $currentComplexitySettings[$index].'Min Length' + 1
+                $minLower = $currentComplexitySettings[$index].'Min Lowercase'
+                $minUpper = $currentComplexitySettings[$index].'Min Uppercase'
+                $minNum = $currentComplexitySettings[$index].'Min Numerical'
+                $minUnique = $currentComplexitySettings[$index].'Min Unique'
+                $minClass = $currentComplexitySettings[$index].'Min Class'
+                $minSpecial = $currentComplexitySettings[$index].'Min Special'
+                $maxRepeats = $currentComplexitySettings[$index].'Max Repeat'
+                $maxRetry = $currentComplexitySettings[$index].'Max Retries'
+                $history = $currentComplexitySettings[$index].'History' + 1
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Automation Password Complexity Positive Testcase"
+                    # Output the current data.
+                    Write-LogToFile -message "MinLength: $minLength -- MinLower: $minLower -- MinUpper: $minUpper -- MinNum: $minNum -- MinClass: $minClass -- MinUnique: $minUnique -- MinSpecial: $minSpecial -- Max Repeat: $maxRepeats -- MaxRetry: $maxRetry -- history: $history"
+
+                    # Update the VMware Aria Automation Password complexity settings.
+                    $updateResult = Update-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vra -minLength $minLength -lowercase $minLower -uppercase $minUpper -numerical $minNum -special $minSpecial -class $minClass -unique $minUnique -retry $maxRetry -history $history -sequence $maxRepeats
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Request the updated VMware Aria Automation Password complexity settings.
+                    $updatedComplexitySettings = Request-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vra
+
+                    # Get the index of the VMware Aria Automation .
+                    $index = Get-Index -output $updatedComplexitySettings -server $ariaAutomationVMname -useLiveData $true -aria $true
+
+                    # Get the updated settings data.
+                    $OutMinLength = $updatedComplexitySettings[$index].'Min Length'
+                    $OutMinLower = $updatedComplexitySettings[$index].'Min Lowercase'
+                    $OutMinUpper = $updatedComplexitySettings[$index].'Min Uppercase'
+                    $OutMinNum = $updatedComplexitySettings[$index].'Min Numerical'
+                    $OutMinClass = $updatedComplexitySettings[$index].'Min Class'
+                    $OutMinUnique = $updatedComplexitySettings[$index].'Min Unique'
+                    $OutMaxRepeats = $updatedComplexitySettings[$index].'Max Repeat'
+                    $OutMaxRetry = $updatedComplexitySettings[$index].'Max Retries'
+                    $OutMinSpecial = $updatedComplexitySettings[$index].'Min Special'
+                    $OutHistory = $updatedComplexitySettings[$index].'History'
+
+                    # Output the updated data.
+                    Write-LogToFile -message "MinLength: $OutMinLength -- MinLower: $OutMinLower -- MinUpper: $OutMinUpper -- MinNum: $OutMinNum -- MinClass: $OutMinClass -- MaxUnique: $OutMinUnique -- Min Special: $OutMinSpecial -- OutMaxRepeats: $OutMaxRepeats -- OutMaxRetry: $OutMaxRetry-- history: $OutHistory"
+
+                    # Assert that the updated data is equal to the incremented data.
+                    $OutMinLength | Should -Be $minLength
+                    $OutMinLower | Should -Be $minLower
+                    $OutMinUpper | Should -Be $minUpper
+                    $OutMinNum | Should -Be $minNum
+                    $OutMinUnique | Should -Be $minUnique
+                    $OutMaxRepeats | Should -Be $maxRepeats
+                    $OutMaxRetry | Should -Be $maxRetry
+                    $OutMinClass | Should -Be $minClass
+                    $OutMinSpecial | Should -Be $minSpecial
+                    $OutHistory | Should -Be $history
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    $false | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Automation Password Complexity Positive Testcase"
+                }
+            }
+
+            # Expect a failure.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Automation Password Complexity Negative Testcase"
+                    # Set history to an invalid value
+                    $history = 10000000000000000000000
+
+                    # Attempt to update the VMware Aria Automation Password complexity settings.
+                    $updateResult = Update-AriaLocalUserPasswordComplexity -server $server -user $user -pass $pass -product vra -minLength $minLength -lowercase $minLower -uppercase $minUpper -numerical $minNum -special $minSpecial -class $minClass -unique $minUnique -retry $maxRetry -history $history -sequence $maxRepeats
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Sometimes settings will not be updated yet there is no exception, hence null ouput.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Automation Password Complexity Negative Testcase"
+                }
+            }
+        }
     }
 
     Describe 'Account Lockout Test Suite' -Tag "AccountLockoutSuite" {
         # ESXi Account Lockout
-        Describe 'ESXi Account Lockout' -Tag "ESXiAccountLockout" {
+        Describe 'ESXi Account Lockout' -Tag "EsxiAccountLockout" {
             BeforeEach {
                 # Request the current ESXi host account lockout settings.
                 $currentLockoutSettings = Request-EsxiAccountLockout -server $server -user $user -pass $pass -domain $domain -cluster $cluster
 
                 # Get the index of the ESXi host.
                 $index = Get-Index -output $currentLockoutSettings -server $esxiServer -useLiveData $useLiveData
-                Write-LogToFile -message "The index of the ESXI host $esxiServer in the output is $index"
+                Write-LogToFile -message "The index of the ESXi host $esxiServer in the output is $index."
 
                 # Increment the Max Failures and Unlock Interval by 1.
                 $maxFailures = [int]$currentLockoutSettings[$index].'Max Failures' + 1
@@ -1264,7 +2006,7 @@ Describe 'Test Suite' {
         }
 
         # SSO Account Lockout
-        Describe 'SSO Account Lockout' -Tag "SSOAccountLockout" {
+        Describe 'SSO Account Lockout' -Tag "SsoAccountLockout" {
             BeforeAll {
                 # Current sso account lockout settings.
                 $currentLockoutSettings = Request-SSOAccountLockout -server $server -user $user -pass $pass -domain $domain
@@ -1340,6 +2082,7 @@ Describe 'Test Suite' {
                 }
             }
         }
+
         # vCenter Account Lockout
         Describe 'vCenter Account Lockout' -Tag "vCenterAccountLockout" {
             BeforeEach {
@@ -1416,7 +2159,8 @@ Describe 'Test Suite' {
             }
         }
 
-        Describe 'SDDC Manager Account Lockout' -Tag "SDDCManagerAccountLockout" {
+        # SDDC Manager Account Lockout
+        Describe 'SDDC Manager Account Lockout' -Tag "SddcManagerAccountLockout" {
             BeforeEach {
                 # Request the current SDDC Manager account lockout settings.
                 $currentLockoutSettings = Request-SddcManagerAccountLockout -server $server -user $user -pass $pass -rootPass $rootPass
@@ -1491,7 +2235,8 @@ Describe 'Test Suite' {
             }
         }
 
-        Describe 'NSXt Edge Account Lockout' -Tag "NSXEdgeAccountLockout" {
+        # NSX Edge Account Lockout
+        Describe 'NSX Edge Account Lockout' -Tag "NsxEdgeAccountLockout" {
             BeforeEach {
                 # Request the current NSX Edge account lockout settings.
                 $currentLockoutSettings = Request-NsxtEdgeAccountLockout -server $server -user $user -pass $pass -domain $domain
@@ -1567,7 +2312,8 @@ Describe 'Test Suite' {
             }
         }
 
-        Describe 'NSXt Manager Account Lockout' -Tag "NsxtManagerAccountLockout" {
+        # NSX Manager Account Lockout
+        Describe 'NSX Manager Account Lockout' -Tag "NsxManagerAccountLockout" {
             BeforeEach {
                 # Request the current NSX-T Manager account lockout settings.
                 $currentLockoutSettings = Request-NsxtManagerAccountLockout -server $server -user $user -pass $pass -domain $domain
@@ -1658,7 +2404,341 @@ Describe 'Test Suite' {
                 }
             }
         }
+
+        # VMware Aria Suite Lifecycle Account Lockout
+        Describe 'VMware Aria Suite Lifecycle Account Lockout' -Tag "AriaSuiteLifecycleAccountLockout" {
+            BeforeEach {
+                # Request the current VMware Aria Suite Lifecycle account lockout settings.
+                $currentLockoutSettings = Request-AriaLocalUserAccountLockout -server $server -user $user -pass $pass -product vrslcm
+
+                $ariaSuiteLifecycleVMname = $ariaSuiteLifecycle.Split('.')[0]
+                Write-LogToFile -message $ariaOperationsVMname
+
+                $index = Get-Index -output $currentLockoutSettings -server $ariaSuiteLifecycleVMname -useLiveData $useLiveData -aria $true
+
+                # Increment existing settings value by 1.
+                $maxFailures = [int]$currentLockoutSettings[$index].'Maximum Failures' + 1
+                $unlockInterval = [int]$currentLockoutSettings[$index].'Unlock Interval' + 1
+                $rootUnlockInterval = [int]$currentLockoutSettings[$index].'Root Unlock Interval' + 1
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Suite Lifecycle Account Lockout Positive Testcase"
+                    Write-LogToFile -message "Incremented Max Failures: $maxFailures"
+                    Write-LogToFile -message "Incremented Unlock Interval: $unlockInterval"
+                    Write-LogToFile -message "Incremented Root Unlock Interval: $rootUnlockInterval"
+
+                    # Update the VMware Aria Suite Lifecycle account lockout settings.
+                    $updateResult = Update-AriaLocalUserPasswordAccountLockout -server $server -user $user -pass $pass -product vrslcm -failures $maxFailures -unlockInterval $unlockInterval -rootUnlockInterval $rootUnlockInterval
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Request the updated VMware Aria Suite Lifecycle account lockout settings.
+                    $updatedLockoutSettings = Request-AriaLocalUserAccountLockout -server $server -user $user -pass $pass -product vrslcm
+
+                    $index = Get-Index -output $currentLockoutSettings -server $ariaSuiteLifecycleVMname -useLiveData $useLiveData -aria $true
+
+                    # Get the updated Max Failures and Unlock Interval.
+                    $outcliMaxFailures = [int]$updatedLockoutSettings[$index].'Maximum Failures'
+                    $outcliUnlockInterval = [int]$updatedLockoutSettings[$index].'Unlock Interval'
+                    $outrootUnlockInterval = [int]$updatedLockoutSettings[$index].'Root Unlock Interval'
+
+                    Write-LogToFile -message "Updated Max Failures: $outcliMaxFailures"
+                    Write-LogToFile -message "Updated Unlock Interval: $outcliUnlockInterval"
+                    Write-LogToFile -message "Updated Root Unlock Interval: $outrootUnlockInterval"
+
+                    # Assert that the updated values are equal to the incremented values.
+                    $outcliMaxFailures | Should -Be $maxFailures
+                    $outcliUnlockInterval | Should -Be $unlockInterval
+                    $outrootUnlockInterval | Should -Be $rootUnlockInterval
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $false
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Suite Lifecycle Account Lockout Positive Testcase"
+                }
+            }
+
+            # Expect a failure. Max failures is taking -1 as input, as it is of type int32, so gave value beyond 2^32.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Suite Lifecycle Account Lockout Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $invalidCliMaxFailures = 10000000000000000000000
+
+                    # Attempt to update the VMware Aria Suite Lifecycle account lockout settings.
+                    $updateResult = Update-AriaLocalUserPasswordAccountLockout -server $server -user $user -pass $pass -product vrslcm -failures $invalidCliMaxFailures -unlockInterval $UnlockInterval -rootUnlockInterval $rootUnlockInterval
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Sometimes settings will not be updated and hence output will be null and not exception.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Suite Lifecycle Account Lockout Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Operations Account Lockout
+        Describe 'VMware Aria Operations Account Lockout' -Tag "AriaOperationsAccountLockout" {
+            BeforeEach {
+                # Request the current VMware Aria Operations account lockout settings.
+                $currentLockoutSettings = Request-AriaLocalUserAccountLockout -server $server -user $user -pass $pass -product vrops
+
+                $ariaOperationsVMname = $ariaOperations.Split('.')[0]
+                Write-LogToFile -message $ariaOperationsVMname
+
+                $index = Get-Index -output $currentLockoutSettings -server $ariaOperationsVMname -useLiveData $useLiveData -aria $true
+
+                # Increment the CLI and API settings by 1.
+                $maxFailures = [int]$currentLockoutSettings[$index].'Maximum Failures' + 1
+                $unlockInterval = [int]$currentLockoutSettings[$index].'Unlock Interval' + 1
+                $rootUnlockInterval = [int]$currentLockoutSettings[$index].'Root Unlock Interval' + 1
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations Account Lockout Positive Testcase"
+                    Write-LogToFile -message "Incremented Max Failures: $maxFailures"
+                    Write-LogToFile -message "Incremented Unlock Interval: $unlockInterval"
+                    Write-LogToFile -message "Incremented Root Unlock Interval: $rootUnlockInterval"
+
+                    # Update the VMware Aria Operations account lockout settings.
+                    $updateResult = Update-AriaLocalUserPasswordAccountLockout -server $server -user $user -pass $pass -product vrops -failures $maxFailures -unlockInterval $unlockInterval -rootUnlockInterval $rootUnlockInterval
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Request the updated VMware Aria Operations account lockout settings.
+                    $updatedLockoutSettings = Request-AriaLocalUserAccountLockout -server $server -user $user -pass $pass -product vrops
+
+                    $index = Get-Index -output $currentLockoutSettings -server $ariaOperationsVMname -useLiveData $useLiveData -aria $true
+
+                    # Get the updated Max Failures and Unlock Interval.
+                    $outcliMaxFailures = [int]$updatedLockoutSettings[$index].'Maximum Failures'
+                    $outcliUnlockInterval = [int]$updatedLockoutSettings[$index].'Unlock Interval'
+                    $outrootUnlockInterval = [int]$updatedLockoutSettings[$index].'Root Unlock Interval'
+
+
+                    Write-LogToFile -message "Updated Max Failures: $outcliMaxFailures"
+                    Write-LogToFile -message "Updated Unlock Interval: $outcliUnlockInterval"
+                    Write-LogToFile -message "Updated Root Unlock Interval: $outrootUnlockInterval"
+
+                    # Assert that the updated values are equal to the incremented values.
+                    $outcliMaxFailures | Should -Be $maxFailures
+                    $outcliUnlockInterval | Should -Be $unlockInterval
+                    $outrootUnlockInterval | Should -Be $rootUnlockInterval
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $false
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations Account Lockout Positive Testcase"
+                }
+            }
+
+            # Expect a failure. Max failures is taking -1 as input, as it is of type int32, so gave value beyond 2^32.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations Account Lockout Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $invalidCliMaxFailures = 10000000000000000000000
+
+                    # Attempt to update the VMware Aria Operations account lockout settings.
+                    $updateResult = Update-AriaLocalUserPasswordAccountLockout -server $server -user $user -pass $pass -product vrops -failures $invalidCliMaxFailures -unlockInterval $UnlockInterval -rootUnlockInterval $rootUnlockInterval
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Sometimes settings will not be updated and hence output will be null and not exception.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations Account Lockout Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Operations for Logs Account Lockout
+        Describe 'VMware Aria Operations for Logs Account Lockout' -Tag "AriaOperationsLogsAccountLockout" {
+            BeforeEach {
+                # Request the current VMware Aria Operations for Logs account lockout settings.
+                $currentLockoutSettings = Request-AriaLocalUserAccountLockout -server $server -user $user -pass $pass -product vrli
+
+                $ariaOperationsLogsVMname = $ariaOperationsLogs.Split('.')[0]
+                Write-LogToFile -message $ariaOperationsLogsVMname
+
+                $index = Get-Index -output $currentLockoutSettings -server $ariaOperationsLogsVMname -useLiveData $useLiveData -aria $true
+
+                # Increment existing settings value by 1.
+                $maxFailures = [int]$currentLockoutSettings[$index].'Maximum Failures' + 1
+                $unlockInterval = [int]$currentLockoutSettings[$index].'Unlock Interval' + 1
+                $rootUnlockInterval = [int]$currentLockoutSettings[$index].'Root Unlock Interval' + 1
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations for Logs Account Lockout Positive Testcase"
+                    Write-LogToFile -message "Incremented Max Failures: $maxFailures"
+                    Write-LogToFile -message "Incremented Unlock Interval: $unlockInterval"
+                    Write-LogToFile -message "Incremented Root Unlock Interval: $rootUnlockInterval"
+
+                    # Update the VMware Aria Operations for Logs account lockout settings.
+                    $updateResult = Update-AriaLocalUserPasswordAccountLockout -server $server -user $user -pass $pass -product vrli -failures $maxFailures -unlockInterval $unlockInterval -rootUnlockInterval $rootUnlockInterval
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Request the updated VMware Aria Operations for Logs account lockout settings.
+                    $updatedLockoutSettings = Request-AriaLocalUserAccountLockout -server $server -user $user -pass $pass -product vrli
+
+                    $index = Get-Index -output $currentLockoutSettings -server $ariaOperationsLogsVMname -useLiveData $useLiveData -aria $true
+
+                    # Get the updated Max Failures and Unlock Interval.
+                    $outcliMaxFailures = [int]$updatedLockoutSettings[$index].'Maximum Failures'
+                    $outcliUnlockInterval = [int]$updatedLockoutSettings[$index].'Unlock Interval'
+                    $outrootUnlockInterval = [int]$updatedLockoutSettings[$index].'Root Unlock Interval'
+
+                    Write-LogToFile -message "Updated Max Failures: $outcliMaxFailures"
+                    Write-LogToFile -message "Updated Unlock Interval: $outcliUnlockInterval"
+                    Write-LogToFile -message "Updated Root Unlock Interval: $outrootUnlockInterval"
+
+                    # Assert that the updated values are equal to the incremented values.
+                    $outcliMaxFailures | Should -Be $maxFailures
+                    $outcliUnlockInterval | Should -Be $unlockInterval
+                    $outrootUnlockInterval | Should -Be $rootUnlockInterval
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $false
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations for Logs Account Lockout Positive Testcase"
+                }
+            }
+
+            # Expect a failure. Max failures is taking -1 as input, as it is of type int32, so gave value beyond 2^32.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Operations for Logs Account Lockout Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $invalidCliMaxFailures = 10000000000000000000000
+
+                    # Attempt to update the VMware Aria Operations for Logs account lockout settings.
+                    $updateResult = Update-AriaLocalUserPasswordAccountLockout -server $server -user $user -pass $pass -product vrli -failures $invalidCliMaxFailures -unlockInterval $UnlockInterval -rootUnlockInterval $rootUnlockInterval
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Sometimes settings will not be updated and hence output will be null and not exception.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Operations for Logs Account Lockout Negative Testcase"
+                }
+            }
+        }
+
+        # VMware Aria Automation Account Lockout
+        Describe 'VMware Aria Automation Account Lockout' -Tag "AriaAutoomationAccountLockout" {
+            BeforeEach {
+                # Request the current VMware Aria Automation account lockout settings.
+                $currentLockoutSettings = Request-AriaLocalUserAccountLockout -server $server -user $user -pass $pass -product vra
+
+                $ariaAutomationVMname = $ariaAutomation.Split('.')[0]
+                Write-LogToFile -message $ariaAutomationVMname
+
+                $index = Get-Index -output $currentLockoutSettings -server $ariaAutomationVMname -useLiveData $useLiveData -aria $true
+
+                # Increment existing settings value by 1.
+                $maxFailures = [int]$currentLockoutSettings[$index].'Maximum Failures' + 1
+                $unlockInterval = [int]$currentLockoutSettings[$index].'Unlock Interval' + 1
+                $rootUnlockInterval = [int]$currentLockoutSettings[$index].'Root Unlock Interval' + 1
+            }
+
+            # Expect a success.
+            It 'Expect Success' -Tag "Positive" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Automation Account Lockout Positive Testcase"
+                    Write-LogToFile -message "Incremented Max Failures: $maxFailures"
+                    Write-LogToFile -message "Incremented Unlock Interval: $unlockInterval"
+                    Write-LogToFile -message "Incremented Root Unlock Interval: $rootUnlockInterval"
+
+                    # Update the VMware Aria Automation account lockout settings.
+                    $updateResult = Update-AriaLocalUserPasswordAccountLockout -server $server -user $user -pass $pass -product vra -failures $maxFailures -unlockInterval $unlockInterval -rootUnlockInterval $rootUnlockInterval
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Request the updated VMware Aria Automation account lockout settings.
+                    $updatedLockoutSettings = Request-AriaLocalUserAccountLockout -server $server -user $user -pass $pass -product vra
+
+                    $index = Get-Index -output $currentLockoutSettings -server $ariaAutomationVMname -useLiveData $useLiveData -aria $true
+
+                    # Get the updated Max Failures and Unlock Interval.
+                    $outcliMaxFailures = [int]$updatedLockoutSettings[$index].'Maximum Failures'
+                    $outcliUnlockInterval = [int]$updatedLockoutSettings[$index].'Unlock Interval'
+                    $outrootUnlockInterval = [int]$updatedLockoutSettings[$index].'Root Unlock Interval'
+
+                    Write-LogToFile -message "Updated Max Failures: $outcliMaxFailures"
+                    Write-LogToFile -message "Updated Unlock Interval: $outcliUnlockInterval"
+                    Write-LogToFile -message "Updated Root Unlock Interval: $outrootUnlockInterval"
+
+                    # Assert that the updated values are equal to the incremented values.
+                    $outcliMaxFailures | Should -Be $maxFailures
+                    $outcliUnlockInterval | Should -Be $unlockInterval
+                    $outrootUnlockInterval | Should -Be $rootUnlockInterval
+                } Catch {
+                    Write-LogToFile -Type ERROR -message "An error occurred: $_"
+                    # If an error was thrown, fail the test.
+                    $true | Should -Be $false
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Automation Account Lockout Positive Testcase"
+                }
+            }
+
+            # Expect a failure. Max failures is taking -1 as input, as it is of type int32, so gave value beyond 2^32.
+            It 'Expect Failure' -Tag "Negative" {
+                Try {
+                    Write-LogToFile -message "Start of VMware Aria Automation Account Lockout Negative Testcase"
+                    # Set MaxDays to an invalid value
+                    $invalidCliMaxFailures = 10000000000000000000000
+
+                    # Attempt to update the VMware Aria Automation account lockout settings.
+                    $updateResult = Update-AriaLocalUserPasswordAccountLockout -server $server -user $user -pass $pass -product vra -failures $invalidCliMaxFailures -unlockInterval $UnlockInterval -rootUnlockInterval $rootUnlockInterval
+
+                    # Output the update result.
+                    Write-LogToFile -message "Update Result: $updateResult"
+
+                    # Sometimes settings will not be updated and hence output will be null and not exception.
+                    $null | Should -Be $updateResult
+                } Catch {
+                    # Output the caught exception.
+                    Write-LogToFile -message "Caught Exception: $_"
+
+                    # For this negative testcase, exception has to be caught, so testcases passes.
+                    $true | Should -Be $true
+                } Finally {
+                    Write-LogToFile -message "End of VMware Aria Automation Account Lockout Negative Testcase"
+                }
+            }
+        }
     }
+
     Describe 'Password Rotation Test Suite' -Tag "PasswordRotationSuite" {
         # NSX Edge Password Rotation
         Describe 'NSX Edge Password Rotation' -Tag "NsxEdgePasswordRotation" {
@@ -1672,7 +2752,7 @@ Describe 'Test Suite' {
 
                     # Get the index of the first NSX Edge  in the output.
                     $index = Get-Index -output $currentRotationSettings -server $nsxEdgeFqdn -user 'root' -Type 'SSH' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the NSX Edge  $nsxEdgeFqdn in the output is $index"
+                    Write-LogToFile -message "The index of the NSX Edge  $nsxEdgeFqdn in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
@@ -1752,6 +2832,7 @@ Describe 'Test Suite' {
                 }
             }
         }
+
         # NSX Manager Password Rotation
         Describe 'NSX Manager Password Rotation' -Tag "NsxManagerPasswordRotation" {
             # Expect a success.
@@ -1764,7 +2845,7 @@ Describe 'Test Suite' {
 
                     # Get the index of the first NSX Manager in the output.
                     $index = Get-Index -output $currentRotationSettings -server $nsxManager -user 'root' -Type 'SSH' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the NSX Manager $nsxManager in the output is $index"
+                    Write-LogToFile -message "The index of the NSX Manager $nsxManager in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
@@ -1844,11 +2925,12 @@ Describe 'Test Suite' {
                 }
             }
         }
+
         <#
         # vCenter Single Sign-on Password Rotation
         TODO:   Failing to rotate credentials.
                 {"errorCode":"PASSWORD_MANAGER_USER_NOT_ALLOWED_PSC","arguments":[],"message":"User is not allowed to update or rotate PSC credentials. Please login using an alternate 'ADMIN' account to perform this operation.","referenceToken":"KBA3UD"}
-        Describe 'SSO Password Rotation' -Tag "SSOPasswordRotation" {
+        Describe 'SSO Password Rotation' -Tag "SsoPasswordRotation" {
             # Expect a success.
             It 'Expect Success' -Tag "Positive" {
                 Try {
@@ -1859,7 +2941,7 @@ Describe 'Test Suite' {
 
                     # Get the index of the first vCenter Single Sign-on in the output.
                     $index = Get-Index -output $currentRotationSettings -server $vcenterServer -user $user -Type 'SSO' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the vCenter Single Sign-on $vcenterServer in the output is $index"
+                    Write-LogToFile -message "The index of the vCenter Single Sign-on $vcenterServer in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
@@ -1941,6 +3023,7 @@ Describe 'Test Suite' {
             }
         }
         #>
+
         # vCenter Server Password Rotation
         Describe 'vCenter Server Password Rotation' -Tag "vCenterPasswordRotation" {
             # Expect a success.
@@ -1953,7 +3036,7 @@ Describe 'Test Suite' {
 
                     # Get the index of the first vCenter Server in the output.
                     $index = Get-Index -output $currentRotationSettings -server $vcenterServer -user 'root' -Type 'SSH' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the vCenter Server $vcenterServer in the output is $index"
+                    Write-LogToFile -message "The index of the vCenter Server $vcenterServer in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
@@ -2034,8 +3117,9 @@ Describe 'Test Suite' {
                 }
             }
         }
-        # VMware Aria Lifecycle Password Rotation
-        Describe 'Aria Suite Lifecycle Password Rotation' -Tag "AriaSuiteLifecyclePasswordRotation" {
+
+        # VMware Aria Suite Lifecycle Password Rotation
+        Describe 'VMware Aria Suite Lifecycle Password Rotation' -Tag "AriaSuiteLifecyclePasswordRotation" {
             # Expect a success.
             It 'Expect Success' -Tag "Positive" {
                 Try {
@@ -2046,7 +3130,7 @@ Describe 'Test Suite' {
 
                     # Get the index of the first Aria Suite Lifecycle in the output.
                     $index = Get-Index -output $currentRotationSettings -server $ariaSuiteLifecycle -user 'root' -Type 'SSH' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the Aria Suite Lifecycle $ariaSuiteLifecycle in the output is $index"
+                    Write-LogToFile -message "The index of the Aria Suite Lifecycle $ariaSuiteLifecycle in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
@@ -2129,8 +3213,9 @@ Describe 'Test Suite' {
                 }
             }
         }
+
         # VMware Aria Operations Password Rotation
-        Describe 'Aria Operations Password Rotation' -Tag "AriaOperationsPasswordRotation" {
+        Describe 'VMware Aria Operations Password Rotation' -Tag "AriaOperationsPasswordRotation" {
             # Expect a success.
             It 'Expect Success' -Tag "Positive" {
                 Try {
@@ -2141,7 +3226,7 @@ Describe 'Test Suite' {
 
                     # Get the index of the first Aria Operations in the output.
                     $index = Get-Index -output $currentRotationSettings -server $ariaOperations -user 'root' -Type 'SSH' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the Aria Operations $ariaOperations in the output is $index"
+                    Write-LogToFile -message "The index of the Aria Operations $ariaOperations in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
@@ -2224,36 +3309,35 @@ Describe 'Test Suite' {
                 }
             }
         }
-        # VMware Aria Operation Logs Password Rotation
-        Describe 'Aria Operation Logs Password Rotation' -Tag "AriaOperationLogsPasswordRotation" {
+
+        # VMware Aria Operation for Logs Password Rotation
+        Describe 'VMware Aria Operation for Logs Password Rotation' -Tag "AriaOperationLogsPasswordRotation" {
             # Expect a success.
             It 'Expect Success' -Tag "Positive" {
                 Try {
-                    Write-LogToFile -message "Start of Aria Operation Logs Password Rotation Testcase"
+                    Write-LogToFile -message "Start of VMware Aria Operation for Logs Password Rotation Testcase"
 
-                    # Request the current Aria Operation Logs password rotation settings.
+                    # Request the current VMware Aria Operation for Logs password rotation settings.
                     $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs'
 
-                    # Get the index of the first Aria Operation Logs in the output.
+                    # Get the index of the first VMware Aria Operation for Logs in the output.
                     $index = Get-Index -output $currentRotationSettings -server $ariaOperationsLogs -user 'root' -Type 'SSH' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the Aria Operation Logs $ariaOperationsLogs in the output is $index"
+                    Write-LogToFile -message "The index of the Aria Operation Logs $ariaOperationsLogs in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
                     Write-LogToFile -message "Frequency Days: $frequencyDays"
 
-
-
                     if ($frequencyDays -match 'Disabled') {
 
-                        # Update the Aria Operation Logs password rotation settings.
+                        # Update the VMware Aria Operation for Logs password rotation settings.
                         $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs' -resourceName $ariaOperationsLogs -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
                         Write-LogToFile -message "Update Result: $updateResult"
 
-                        # Request the updated Aria Operation Logs password rotation settings.
+                        # Request the updated VMware Aria Operation for Logs password rotation settings.
                         $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs'
 
-                        # Get the index of the first Aria Operation Logs  in the output.
+                        # Get the index of the first VMware Aria Operation for Logs in the output.
                         $index = Get-Index -output $updatedRotationSettings -server $ariaOperationsLogs -useLiveData $useLiveData -user 'root' -Type 'SSH'
 
                         # Get the updated Frequency in Days.
@@ -2266,13 +3350,13 @@ Describe 'Test Suite' {
                         $outFrequencyDays | Should -Be 90
 
                     } else {
-                        # Update the Aria Operation Logs password rotation settings.
+                        # Update the VMware Aria Operation for Logs password rotation settings.
                         $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs' -resourceName $ariaOperationsLogs -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
                         Write-LogToFile -message "Update Result: $updateResult"
 
                         $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaOperationsLogs'
 
-                        # Get the index of the first Aria Operation Logs  in the output.
+                        # Get the index of the first VMware Aria Operation for Logs in the output.
                         $index = Get-Index -output $updatedRotationSettings -server $ariaOperationsLogs -useLiveData $useLiveData -user 'root' -Type 'SSH'
 
                         # Get the updated Frequency in Days.
@@ -2289,7 +3373,7 @@ Describe 'Test Suite' {
                     Write-LogToFile -Type ERROR -message "An error occurred: $_"
                     $false | Should -Be $true
                 } Finally {
-                    Write-LogToFile -message "End of Aria Operation Logs Password Rotation Positive Testcase"
+                    Write-LogToFile -message "End of VMware Aria Operation for Logs Password Rotation Positive Testcase"
                 }
             }
 
@@ -2319,36 +3403,35 @@ Describe 'Test Suite' {
                 }
             }
         }
+
         # VMware Aria Automation Password Rotation
-        Describe 'Aria Automation Password Rotation' -Tag "AriaAutomationPasswordRotation" {
+        Describe 'VMware Aria Automation Password Rotation' -Tag "AriaAutomationPasswordRotation" {
             # Expect a success.
             It 'Expect Success' -Tag "Positive" {
                 Try {
-                    Write-LogToFile -message "Start of Aria Automation Password Rotation Testcase"
+                    Write-LogToFile -message "Start of VMware Aria Automation Password Rotation Testcase"
 
-                    # Request the current Aria Automation password rotation settings.
+                    # Request the current VMware Aria Automation password rotation settings.
                     $currentRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation'
 
-                    # Get the index of the first Aria Automation in the output.
+                    # Get the index of the first VMware Aria Automation in the output.
                     $index = Get-Index -output $currentRotationSettings -server $ariaAutomation -user 'root' -Type 'SSH' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the Aria Automation $ariaAutomation in the output is $index"
+                    Write-LogToFile -message "The index of the Aria Automation $ariaAutomation in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'
                     Write-LogToFile -message "Frequency Days: $frequencyDays"
 
-
-
                     if ($frequencyDays -match 'Disabled') {
 
-                        # Update the Aria Automation password rotation settings.
+                        # Update the VMware Aria Automation password rotation settings.
                         $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation' -resourceName $ariaAutomation -credential 'SSH' -credentialName 'root' -autoRotate 'enabled' -frequencyInDays 90
                         Write-LogToFile -message "Update Result: $updateResult"
 
-                        # Request the updated Aria Automation password rotation settings.
+                        # Request the updated VMware Aria Automation password rotation settings.
                         $updatedRotationSettings = Request-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation'
 
-                        # Get the index of the first Aria Automation  in the output.
+                        # Get the index of the first VMware Aria Automation in the output.
                         $index = Get-Index -output $updatedRotationSettings -server $ariaAutomation -useLiveData $useLiveData -user 'root' -Type 'SSH'
 
                         # Get the updated Frequency in Days.
@@ -2361,7 +3444,7 @@ Describe 'Test Suite' {
                         $outFrequencyDays | Should -Be 90
 
                     } else {
-                        # Update the Aria Automation password rotation settings.
+                        # Update the VMware Aria Automation password rotation settings.
                         $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation' -resourceName $ariaAutomation -credential 'SSH' -credentialName 'root' -autoRotate 'disabled'
                         Write-LogToFile -message "Update Result: $updateResult"
 
@@ -2383,18 +3466,18 @@ Describe 'Test Suite' {
                     Write-LogToFile -Type ERROR -message "An error occurred: $_"
                     $false | Should -Be $true
                 } Finally {
-                    Write-LogToFile -message "End of Aria Automation Password Rotation Positive Testcase"
+                    Write-LogToFile -message "End of VMware Aria Automation Password Rotation Positive Testcase"
                 }
             }
 
             # Expect a failure.
             It 'Expect Failure' -Tag "Negative" {
                 Try {
-                    Write-LogToFile -message "Start of Aria Automation Password Rotation Negative Testcase"
+                    Write-LogToFile -message "Start of VMware Aria Automation Password Rotation Negative Testcase"
                     # Set the Frequency to an invalid value
                     $frequencyInDays = 100000000000000000000000000000
 
-                    # Attempt to update the Aria Automation password rotation settings.
+                    # Attempt to update the VMware Aria Automation password rotation settings.
                     $updateResult = Update-PasswordRotationPolicy -server $server -user $user -pass $pass -domain $domain -resource 'ariaAutomation' -resourceName $ariaAutomation -credential SSH -credentialName root -autoRotate enabled -frequencyInDays $frequencyInDays
 
                     # Output the update result.
@@ -2409,10 +3492,11 @@ Describe 'Test Suite' {
                     # If an error was thrown, fail the test.
                     $true | Should -Be $true
                 } Finally {
-                    Write-LogToFile -message "End of Aria Automation Password Rotation Negative Testcase"
+                    Write-LogToFile -message "End of VMware Aria Automation Password Rotation Negative Testcase"
                 }
             }
         }
+
         # Workspace ONE Access Password Rotation
         Describe 'Workspace ONE Access Password Rotation' -Tag "WorkspaceOneAcccessPasswordRotation" {
             # Expect a success.
@@ -2425,7 +3509,7 @@ Describe 'Test Suite' {
 
                     # Get the index of the first Workspace ONE Access in the output.
                     $index = Get-Index -output $currentRotationSettings -server $workspaceOneAccess -user 'root' -Type 'SSH' -useLiveData $useLiveData
-                    Write-LogToFile -message "The index of the Workspace ONE Access $workspaceOneAccess in the output is $index"
+                    Write-LogToFile -message "The index of the Workspace ONE Access $workspaceOneAccess in the output is $index."
 
                     # Check the Frequency of auto rotation.
                     $frequencyDays = $currentRotationSettings[$index].'Frequency Days'

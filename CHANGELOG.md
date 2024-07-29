@@ -1,5 +1,13 @@
 # Release History
 
+## v1.8.3
+
+> Release Date: Not Released
+
+Chore:
+
+- Added Pester tests for VMware Aria components. [GH-211](https://github.com/vmware/powershell-module-for-vmware-cloud-foundation-password-management/pull/211)
+
 ## v1.8.2
 
 > Release Date: 2024-07-24
