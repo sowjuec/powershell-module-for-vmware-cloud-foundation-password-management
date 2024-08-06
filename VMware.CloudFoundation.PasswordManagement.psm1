@@ -1376,9 +1376,14 @@ Function Get-PasswordPolicyDefault {
     $wsaLocalPasswordExpiration | Add-Member -notepropertyname 'minDays' -notepropertyvalue "0"
     $wsaLocalPasswordExpiration | Add-Member -notepropertyname 'warningDays' -notepropertyvalue "7"
     $wsaLocalPasswordComplexity = New-Object -TypeName psobject
-    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'minLength' -notepropertyvalue "1"
-    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'retries' -notepropertyvalue "3"
+    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'minLength' -notepropertyvalue "6"
+    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'minLowercase' -notepropertyvalue "0"
+    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'minUppercase' -notepropertyvalue "0"
+    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'minNumerical' -notepropertyvalue "0"
+    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'minSpecial' -notepropertyvalue "0"
+    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'maxIdenticalAdjacent' -notepropertyvalue "0"
     $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'history' -notepropertyvalue "5"
+    $wsaLocalPasswordComplexity | Add-Member -notepropertyname 'retries' -notepropertyvalue "3"
     $wsaLocalAccountLockout = New-Object -TypeName psobject
     $wsaLocalAccountLockout | Add-Member -notepropertyname 'maxFailures' -notepropertyvalue "3"
     $wsaLocalAccountLockout | Add-Member -notepropertyname 'unlockInterval' -notepropertyvalue "900"
